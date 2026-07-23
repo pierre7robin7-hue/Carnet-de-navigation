@@ -31,7 +31,7 @@ function SyncBadge({ pending, isOnline }) {
   return null;
 }
 
-function ThemeToggle({ className = '' }) {
+function ThemeToggle({ className = '', style }) {
   const [dark, setDark] = React.useState(() => document.documentElement.classList.contains('dark'));
 
   const toggle = () => {
@@ -44,6 +44,7 @@ function ThemeToggle({ className = '' }) {
   return (
     <button
       onClick={toggle}
+      style={style}
       aria-label={dark ? 'Passer en mode clair' : 'Passer en mode sombre'}
       title={dark ? 'Mode clair' : 'Mode sombre'}
       className={classNames('text-navy-300 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors', className)}
@@ -92,7 +93,7 @@ const NAV_LINKS = [
 
 function Navbar({ route, userEmail, onSignOut, syncBadge }) {
   return (
-    <header className="no-print bg-gradient-to-r from-navy-950 via-navy-900 to-navy-900 sticky top-0 z-30 shadow-soft">
+    <header className="no-print bg-gradient-to-r from-navy-950 via-navy-900 to-navy-900 sticky top-0 z-30 shadow-soft safe-top">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
           <a href="#/" className="flex items-center gap-2 text-white font-heading font-semibold text-lg tracking-tight justify-self-start">

@@ -44,7 +44,10 @@ function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 relative">
-      <ThemeToggle className="!text-navy-400 hover:!text-navy-700 dark:!text-navy-500 dark:hover:!text-white absolute top-4 right-4" />
+      <ThemeToggle
+        className="!text-navy-400 hover:!text-navy-700 dark:!text-navy-500 dark:hover:!text-white absolute right-4"
+        style={{ top: 'calc(env(safe-area-inset-top, 0px) + 1rem)' }}
+      />
       <div className="w-full max-w-sm bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-7">
         <div className="flex items-center gap-2 text-navy-900 dark:text-navy-50 font-heading font-semibold text-lg mb-1">
           <span className="text-ocean-500"><Icon.Sailboat size={24} /></span>

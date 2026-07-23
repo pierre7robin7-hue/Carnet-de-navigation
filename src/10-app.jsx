@@ -30,6 +30,12 @@ function App() {
   const [migrating, setMigrating] = React.useState(false);
 
   const refresh = React.useCallback(() => setOutings(Store.getAll()), []);
+  // Mémorise pour quel utilisateur on a déjà rapatrié les données, afin qu'un
+  // simple rafraîchissement de jeton (même session, même utilisateur — ça
+  // arrive régulièrement en arrière-plan) ne relance jamais un remplacement
+  // du cache local : ça écraserait des sorties saisies hors-ligne pas encore
+  // synchronisées (cas fréquent en mer, sans réseau).
+  const hydratedUserRef = React.useRef(null);
 
   // Récupération et suivi de la session de connexion.
   React.useEffect(() => {
@@ -44,7 +50,8 @@ function App() {
   // mise en place des comptes), on propose de les envoyer plutôt que de les
   // écraser silencieusement.
   React.useEffect(() => {
-    if (!session) return;
+    if (!session) { hydratedUserRef.current = null; return; }
+    if (hydratedUserRef.current === session.user.id) return;
     let active = true;
     (async () => {
       try {
@@ -57,6 +64,7 @@ function App() {
           Store.replaceAllLocal(remote.sorties);
           CustomPorts.replaceAllLocal(remote.ports);
         }
+        hydratedUserRef.current = session.user.id;
       } catch (err) {
         console.error('Récupération des données du compte impossible', err);
       } finally {

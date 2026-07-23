@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Carnet de Navigation</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%230a1f30'/><rect x='48' y='16' width='4' height='50' rx='2' fill='%23dfe7ee'/><path d='M52 20 L52 64 L78 64 Z' fill='%234da2ff'/><path d='M48 28 L48 64 L24 64 Z' fill='%23ffffff'/><path d='M14 66 L86 66 L74 84 Q50 90 26 84 Z' fill='%23ffffff'/><path d='M14 66 L86 66 L82 72 L18 72 Z' fill='%231c7ef2'/></svg>" />
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230a1f30'/><rect x='48' y='14' width='4' height='52' rx='2' fill='%23dfe7ee'/><path d='M52 18 L52 66 L80 66 Z' fill='%234da2ff'/><path d='M48 27 L48 66 L22 66 Z' fill='%23ffffff'/><path d='M10 68 L90 68 L76 88 Q50 95 24 88 Z' fill='%23ffffff'/><path d='M10 68 L90 68 L85 75 L15 75 Z' fill='%231c7ef2'/></svg>" />
+<link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+<link rel="manifest" href="./manifest.json" />
+<meta name="theme-color" content="#0a1f30" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Carnet de Navigation" />
 
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -131,6 +135,16 @@
       </div>`;
     }
   })();
+
+  // Installation sur iPhone / accès hors-ligne de base : enregistré après le
+  // chargement pour ne jamais retarder le premier affichage de l'app.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./service-worker.js').catch((err) => {
+        console.error('Enregistrement du service worker impossible', err);
+      });
+    });
+  }
 </script>
 </body>
 </html>

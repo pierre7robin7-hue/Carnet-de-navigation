@@ -69,7 +69,7 @@ function LegFormFields({ leg, onChange }) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3"><Icon.Route size={16} className="text-ocean-600" /> Trajet</h3>
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3"><Icon.Route size={16} className="text-ocean-600" /> Trajet</h3>
         <div className="grid sm:grid-cols-2 gap-4">
           <Field label="Port de départ" required>
             <input list="ports-datalist" className={inputClass} value={leg.portDepart} onChange={(e) => set('portDepart', e.target.value)} placeholder="Ex. La Trinité-sur-Mer" />
@@ -94,8 +94,8 @@ function LegFormFields({ leg, onChange }) {
         </div>
       </div>
 
-      <div className="border-t border-navy-50 pt-4">
-        <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3"><Icon.Wind size={16} className="text-ocean-600" /> Conditions météo</h3>
+      <div className="border-t border-navy-50 dark:border-navy-700 pt-4">
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3"><Icon.Wind size={16} className="text-ocean-600" /> Conditions météo</h3>
         <div className="grid sm:grid-cols-3 gap-4">
           <Field label="Vent (noeuds)">
             <input type="number" min="0" className={inputClass} value={leg.meteo.ventNoeuds} onChange={(e) => set('meteo.ventNoeuds', e.target.value)} placeholder="0" />
@@ -113,8 +113,8 @@ function LegFormFields({ leg, onChange }) {
         </div>
       </div>
 
-      <div className="border-t border-navy-50 pt-4">
-        <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3"><Icon.Gauge size={16} className="text-ocean-600" /> Ressenti du skipper</h3>
+      <div className="border-t border-navy-50 dark:border-navy-700 pt-4">
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3"><Icon.Gauge size={16} className="text-ocean-600" /> Ressenti du skipper</h3>
         <div className="space-y-4">
           <Field label="Humeur">
             <div className="flex flex-wrap gap-2">
@@ -123,7 +123,7 @@ function LegFormFields({ leg, onChange }) {
                   type="button" key={h.value} onClick={() => set('skipper.humeur', h.value)}
                   className={classNames(
                     'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium border transition-colors',
-                    leg.skipper.humeur === h.value ? 'bg-ocean-50 border-ocean-400 text-ocean-700' : 'border-navy-100 text-navy-500 hover:bg-navy-50'
+                    leg.skipper.humeur === h.value ? 'bg-ocean-50 border-ocean-400 text-ocean-700' : 'border-navy-100 dark:border-navy-700 text-navy-500 dark:text-navy-400 hover:bg-navy-50 dark:hover:bg-navy-700'
                   )}
                 >
                   <span className="text-base">{h.emoji}</span> {h.label}
@@ -140,15 +140,15 @@ function LegFormFields({ leg, onChange }) {
         </div>
       </div>
 
-      <div className="border-t border-navy-50 pt-4">
-        <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3"><Icon.Sailboat size={16} className="text-ocean-600" /> Voiles utilisées</h3>
+      <div className="border-t border-navy-50 dark:border-navy-700 pt-4">
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3"><Icon.Sailboat size={16} className="text-ocean-600" /> Voiles utilisées</h3>
         <div className="flex flex-wrap gap-2">
           {VOILES_DISPONIBLES.map((v) => (
             <button
               type="button" key={v} onClick={() => toggleVoile(v)}
               className={classNames(
                 'px-3 py-1.5 rounded-full text-sm font-medium border transition-colors',
-                leg.voiles.includes(v) ? 'bg-navy-800 border-navy-800 text-white' : 'border-navy-100 text-navy-500 hover:bg-navy-50'
+                leg.voiles.includes(v) ? 'bg-navy-800 dark:bg-navy-600 border-navy-800 dark:border-navy-600 text-white' : 'border-navy-100 dark:border-navy-700 text-navy-500 dark:text-navy-400 hover:bg-navy-50 dark:hover:bg-navy-700'
               )}
             >
               {v}
@@ -157,20 +157,20 @@ function LegFormFields({ leg, onChange }) {
         </div>
       </div>
 
-      <div className="border-t border-navy-50 pt-4">
-        <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3"><Icon.Users size={16} className="text-ocean-600" /> Équipage à bord</h3>
+      <div className="border-t border-navy-50 dark:border-navy-700 pt-4">
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3"><Icon.Users size={16} className="text-ocean-600" /> Équipage à bord</h3>
         <div className="flex gap-2">
           <input
             className={inputClass} value={crewInput} onChange={(e) => setCrewInput(e.target.value)}
             placeholder="Nom de l’équipier·ère"
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCrew(); } }}
           />
-          <button type="button" onClick={addCrew} className="shrink-0 px-4 rounded-lg bg-navy-800 text-white text-sm font-medium hover:bg-navy-700">Ajouter</button>
+          <button type="button" onClick={addCrew} className="shrink-0 px-4 rounded-lg bg-navy-800 dark:bg-navy-600 text-white text-sm font-medium hover:bg-navy-700 dark:hover:bg-navy-500">Ajouter</button>
         </div>
         {leg.equipage.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {leg.equipage.map((n) => (
-              <span key={n} className="inline-flex items-center gap-1.5 bg-navy-50 text-navy-700 text-sm font-medium pl-3 pr-1.5 py-1 rounded-full">
+              <span key={n} className="inline-flex items-center gap-1.5 bg-navy-50 dark:bg-navy-700 text-navy-700 dark:text-navy-200 text-sm font-medium pl-3 pr-1.5 py-1 rounded-full">
                 {n}
                 <button type="button" onClick={() => removeCrew(n)} className="text-navy-400 hover:text-coral-500"><Icon.X size={13} /></button>
               </span>
@@ -179,7 +179,7 @@ function LegFormFields({ leg, onChange }) {
         )}
       </div>
 
-      <div className="border-t border-navy-50 pt-4">
+      <div className="border-t border-navy-50 dark:border-navy-700 pt-4">
         <h3 className="font-heading font-semibold text-navy-800 mb-3">Commentaire libre</h3>
         <textarea rows={3} className={inputClass} value={leg.commentaire} onChange={(e) => set('commentaire', e.target.value)} placeholder="Manoeuvres, incidents techniques, mouillages, observations…" />
       </div>
@@ -199,14 +199,14 @@ function ModeToggle({ mode, setMode }) {
           key={o.value} type="button" onClick={() => setMode(o.value)}
           className={classNames(
             'flex items-start gap-3 p-4 rounded-xl border-2 text-left transition-colors',
-            mode === o.value ? 'bg-ocean-50 border-ocean-400' : 'bg-white border-navy-100 hover:border-navy-200'
+            mode === o.value ? 'bg-ocean-50 dark:bg-ocean-900/30 border-ocean-400' : 'bg-white dark:bg-navy-800 border-navy-100 dark:border-navy-700 hover:border-navy-200 dark:hover:border-navy-600'
           )}
         >
-          <span className={classNames('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', mode === o.value ? 'bg-ocean-500 text-white' : 'bg-navy-50 text-navy-400')}>
+          <span className={classNames('w-9 h-9 rounded-lg flex items-center justify-center shrink-0', mode === o.value ? 'bg-ocean-500 text-white' : 'bg-navy-50 dark:bg-navy-700 text-navy-400')}>
             <o.icon size={18} />
           </span>
           <span>
-            <span className={classNames('block font-semibold text-sm', mode === o.value ? 'text-ocean-700' : 'text-navy-700')}>{o.label}</span>
+            <span className={classNames('block font-semibold text-sm', mode === o.value ? 'dark:text-ocean-300 text-ocean-700' : 'text-navy-700 dark:text-navy-300')}>{o.label}</span>
             <span className="block text-xs text-navy-400 mt-0.5">{o.hint}</span>
           </span>
         </button>
@@ -271,10 +271,10 @@ function OutingFormPage({ existing, onSubmit }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <a href={cancelHref} className="inline-flex items-center gap-1.5 text-navy-500 hover:text-navy-800 text-sm font-medium mb-4">
+      <a href={cancelHref} className="inline-flex items-center gap-1.5 text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-100 text-sm font-medium mb-4">
         <Icon.ArrowLeft size={16} /> Annuler
       </a>
-      <h1 className="font-heading text-2xl sm:text-3xl font-bold text-navy-900 mb-6">
+      <h1 className="font-heading text-2xl sm:text-3xl font-bold text-navy-900 dark:text-navy-50 mb-6">
         {isEdit ? 'Modifier la sortie' : 'Nouvelle sortie'}
       </h1>
 
@@ -289,7 +289,7 @@ function OutingFormPage({ existing, onSubmit }) {
       <form onSubmit={handleSubmit} className="space-y-6">
         <ModeToggle mode={mode} setMode={changeMode} />
 
-        <section className="bg-white rounded-2xl shadow-soft p-5 space-y-4">
+        <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 space-y-4">
           {mode === 'voyage' && (
             <Field label="Titre du voyage" hint="Optionnel — sinon généré à partir des ports de départ et d’arrivée">
               <input className={inputClass} value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Croisière Belle-Île — 3 jours" />
@@ -301,17 +301,17 @@ function OutingFormPage({ existing, onSubmit }) {
         </section>
 
         {mode === 'simple' ? (
-          <section className="bg-white rounded-2xl shadow-soft p-5">
+          <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
             <LegFormFields leg={leg} onChange={setLeg} />
           </section>
         ) : (
           <>
             {etapes.map((et, i) => (
-              <section key={i} className="bg-white rounded-2xl shadow-soft p-5">
+              <section key={i} className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
                     <span className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-700 text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
-                    <span className="font-heading font-semibold text-navy-800">Étape {i + 1}</span>
+                    <span className="font-heading font-semibold text-navy-800 dark:text-navy-100">Étape {i + 1}</span>
                   </div>
                   {etapes.length > 2 && (
                     <button type="button" onClick={() => removeEtape(i)} className="inline-flex items-center gap-1 text-xs font-medium text-coral-600 hover:text-coral-700 px-2 py-1 rounded-lg hover:bg-coral-400/10">
@@ -325,7 +325,7 @@ function OutingFormPage({ existing, onSubmit }) {
 
             <button
               type="button" onClick={addEtape}
-              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl border-2 border-dashed border-navy-200 text-navy-500 text-sm font-medium hover:border-ocean-400 hover:text-ocean-600 hover:bg-ocean-50/50 transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 py-3 rounded-xl border-2 border-dashed border-navy-200 dark:border-navy-700 text-navy-500 dark:text-navy-400 text-sm font-medium hover:border-ocean-400 hover:text-ocean-600 hover:bg-ocean-50/50 dark:hover:bg-ocean-900/20 transition-colors"
             >
               <Icon.Plus size={16} /> Ajouter une étape
             </button>
@@ -333,7 +333,7 @@ function OutingFormPage({ existing, onSubmit }) {
         )}
 
         <div className="flex justify-end gap-3 pb-4">
-          <a href={cancelHref} className="px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 hover:bg-navy-50">Annuler</a>
+          <a href={cancelHref} className="px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-800">Annuler</a>
           <button type="submit" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white shadow-glow hover:shadow-glow-lg transition-all">
             {isEdit ? 'Enregistrer les modifications' : 'Enregistrer la sortie'}
           </button>

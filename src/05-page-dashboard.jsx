@@ -86,27 +86,27 @@ function DashboardPage({ outings }) {
         <StatCard icon={Icon.MapPin} label="Port le plus fréquenté" value={stats.topPort || '—'} sub={stats.topCount ? `${stats.topCount} passages` : ''} />
       </div>
 
-      <div className="bg-white rounded-2xl shadow-soft p-5 sm:p-6">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 sm:p-6">
         <div className="flex items-center justify-between mb-2">
-          <h2 className="font-heading font-semibold text-navy-800">Distance par mois</h2>
+          <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100">Distance par mois</h2>
           <span className="text-xs text-navy-400">12 derniers mois</span>
         </div>
         <MonthlyChart data={chartData} />
       </div>
 
       {boatStats.length > 0 && (
-        <div className="bg-white rounded-2xl shadow-soft p-5 sm:p-6">
-          <h2 className="font-heading font-semibold text-navy-800 mb-4">Par bateau</h2>
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 sm:p-6">
+          <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100 mb-4">Par bateau</h2>
           <div className="space-y-4">
             {boatStats.map((b) => (
               <div key={b.boat}>
                 <div className="flex items-center justify-between gap-3 mb-1.5">
-                  <span className="flex items-center gap-2 font-medium text-navy-800 text-sm truncate">
+                  <span className="flex items-center gap-2 font-medium text-navy-800 dark:text-navy-200 text-sm truncate">
                     <Icon.Sailboat size={15} className="text-ocean-500 shrink-0" /> {b.boat}
                   </span>
                   <span className="text-xs text-navy-400 shrink-0">{b.count} sortie{b.count > 1 ? 's' : ''} · {formatNm(b.distance)}</span>
                 </div>
-                <div className="h-2 rounded-full bg-navy-50 overflow-hidden">
+                <div className="h-2 rounded-full bg-navy-50 dark:bg-navy-700 overflow-hidden">
                   <div
                     className="h-full rounded-full bg-gradient-to-r from-ocean-400 to-ocean-600"
                     style={{ width: `${Math.max(4, (b.distance / maxBoatDistance) * 100)}%` }}
@@ -120,7 +120,7 @@ function DashboardPage({ outings }) {
 
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-heading font-semibold text-navy-800">Dernières navigations</h2>
+          <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100">Dernières navigations</h2>
           <a href="#/historique" className="text-ocean-600 text-sm font-medium hover:underline">Voir tout l’historique</a>
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

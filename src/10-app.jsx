@@ -13,7 +13,7 @@ function parseRoute(hash) {
 
 function Footer() {
   return (
-    <footer className="no-print border-t border-navy-100 mt-10">
+    <footer className="no-print border-t border-navy-100 dark:border-navy-800 mt-10 pb-20 md:pb-0">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-center gap-2 text-navy-400 text-xs">
         <Icon.Anchor size={14} />
         Carnet de Navigation — vos données sont liées à votre compte et synchronisées entre vos appareils.
@@ -28,8 +28,26 @@ function App() {
   const [session, setSession] = React.useState(undefined); // undefined = chargement, null = déconnecté
   const [migratePrompt, setMigratePrompt] = React.useState(false);
   const [migrating, setMigrating] = React.useState(false);
+  const [pendingSync, setPendingSync] = React.useState(() => RemoteSync.pendingCount());
+  const [isOnline, setIsOnline] = React.useState(() => (typeof navigator === 'undefined' ? true : navigator.onLine));
 
   const refresh = React.useCallback(() => setOutings(Store.getAll()), []);
+
+  // Suivi de la file d'attente de synchronisation et de l'état réseau, pour
+  // afficher un indicateur honnête plutôt que de laisser croire que tout est
+  // toujours à jour.
+  React.useEffect(() => {
+    const unsubscribe = RemoteSync.subscribeQueue(setPendingSync);
+    const onOnline = () => setIsOnline(true);
+    const onOffline = () => setIsOnline(false);
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => {
+      unsubscribe();
+      window.removeEventListener('online', onOnline);
+      window.removeEventListener('offline', onOffline);
+    };
+  }, []);
   // Mémorise pour quel utilisateur on a déjà rapatrié les données, afin qu'un
   // simple rafraîchissement de jeton (même session, même utilisateur — ça
   // arrive régulièrement en arrière-plan) ne relance jamais un remplacement
@@ -55,6 +73,17 @@ function App() {
     let active = true;
     (async () => {
       try {
+        // On tente d'abord d'envoyer toute écriture locale encore en attente
+        // (faite hors-ligne) : si elle n'est pas passée, on ne rapatrie pas
+        // les données distantes cette fois-ci, pour ne jamais écraser des
+        // sorties pas encore synchronisées avec une version distante plus
+        // ancienne.
+        await RemoteSync.flushQueue();
+        if (!active) return;
+        if (RemoteSync.pendingCount() > 0) {
+          hydratedUserRef.current = session.user.id;
+          return;
+        }
         const remote = await RemoteSync.fetchAll();
         if (!active) return;
         const hasLocalData = Store.getAll().length > 0;
@@ -96,9 +125,21 @@ function App() {
   };
 
   const handleDelete = (id) => {
+    const existing = outings.find((o) => o.id === id);
+    if (existing && existing.photos && existing.photos.length) {
+      // Best-effort : on ne bloque jamais la suppression sur le nettoyage
+      // des fichiers distants (sinon perdus dans le quota gratuit, mais sans
+      // gravité — pas de donnée utilisateur perdue).
+      Storage.remove(existing.photos).catch((err) => console.error('Nettoyage des photos distantes impossible', err));
+    }
     Store.remove(id);
     refresh();
     window.location.hash = '#/historique';
+  };
+
+  const handlePhotosChange = (outing, photos) => {
+    Store.update(outing.id, { ...outing, photos });
+    refresh();
   };
 
   const handleMigrateConfirm = async () => {
@@ -125,7 +166,7 @@ function App() {
 
   if (session === undefined) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-navy-400">
+      <div className="min-h-screen flex items-center justify-center text-navy-400 dark:text-navy-500">
         Chargement du carnet de navigation…
       </div>
     );
@@ -151,14 +192,23 @@ function App() {
     page = <OutingFormPage existing={existing} onSubmit={(data) => handleUpdate(route.id, data)} />;
   } else if (route.name === 'detail') {
     const outing = outings.find((o) => o.id === route.id) || null;
-    page = <OutingDetailPage outing={outing} onDelete={handleDelete} />;
+    page = <OutingDetailPage outing={outing} onDelete={handleDelete} onPhotosChange={handlePhotosChange} />;
   }
+
+  const showFab = route.name !== 'new' && route.name !== 'edit';
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar route={route} userEmail={session.user.email} onSignOut={handleSignOut} />
+      <Navbar
+        route={route}
+        userEmail={session.user.email}
+        onSignOut={handleSignOut}
+        syncBadge={<SyncBadge pending={pendingSync} isOnline={isOnline} />}
+      />
       <main className="flex-1">{page}</main>
       <Footer />
+      <BottomTabBar route={route} />
+      {showFab && <FabNewOuting />}
       <ConfirmDialog
         open={migratePrompt}
         title="Reprendre tes sorties existantes ?"

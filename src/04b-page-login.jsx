@@ -43,9 +43,10 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-sm bg-white rounded-2xl shadow-soft p-7">
-        <div className="flex items-center gap-2 text-navy-900 font-heading font-semibold text-lg mb-1">
+    <div className="min-h-screen flex items-center justify-center px-4 relative">
+      <ThemeToggle className="!text-navy-400 hover:!text-navy-700 dark:!text-navy-500 dark:hover:!text-white absolute top-4 right-4" />
+      <div className="w-full max-w-sm bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-7">
+        <div className="flex items-center gap-2 text-navy-900 dark:text-navy-50 font-heading font-semibold text-lg mb-1">
           <span className="text-ocean-500"><Icon.Sailboat size={24} /></span>
           Carnet de Navigation
         </div>
@@ -68,8 +69,8 @@ function LoginPage() {
               value={password} onChange={(e) => setPassword(e.target.value)} className={inputClass} placeholder="••••••••"
             />
           </Field>
-          {error && <p className="text-sm text-coral-600 bg-coral-400/10 rounded-lg px-3 py-2">{error}</p>}
-          {info && <p className="text-sm text-teal-700 bg-teal-50 rounded-lg px-3 py-2">{info}</p>}
+          {error && <p className="text-sm text-coral-600 dark:text-coral-300 bg-coral-400/10 dark:bg-coral-400/20 rounded-lg px-3 py-2">{error}</p>}
+          {info && <p className="text-sm text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 rounded-lg px-3 py-2">{info}</p>}
           <button
             type="submit" disabled={loading}
             className="w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-60"
@@ -77,7 +78,7 @@ function LoginPage() {
             {loading ? 'Un instant…' : mode === 'signin' ? 'Se connecter' : 'Créer mon compte'}
           </button>
         </form>
-        <button onClick={switchMode} className="w-full text-center text-sm text-navy-500 hover:text-ocean-600 mt-4">
+        <button onClick={switchMode} className="w-full text-center text-sm text-navy-500 dark:text-navy-400 hover:text-ocean-600 dark:hover:text-ocean-400 mt-4">
           {mode === 'signin' ? 'Pas encore de compte ? Créer un compte' : 'Déjà un compte ? Se connecter'}
         </button>
       </div>

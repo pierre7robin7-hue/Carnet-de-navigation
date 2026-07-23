@@ -34,8 +34,8 @@ function HistoryPage({ outings }) {
         subtitle={`${filtered.length} navigation${filtered.length > 1 ? 's' : ''} ${hasActiveFilters ? 'correspondant aux filtres' : 'au total'}`}
       />
 
-      <div className="bg-white rounded-2xl shadow-soft p-5">
-        <div className="flex items-center gap-2 text-navy-700 font-medium text-sm mb-4">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+        <div className="flex items-center gap-2 text-navy-700 dark:text-navy-200 font-medium text-sm mb-4">
           <Icon.Filter size={16} className="text-ocean-600" /> Filtres
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">

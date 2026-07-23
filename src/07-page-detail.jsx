@@ -3,7 +3,7 @@ function FatigueBar({ value }) {
   return (
     <div className="flex items-center gap-1.5">
       {[1, 2, 3, 4, 5].map((i) => (
-        <span key={i} className={classNames('h-2.5 w-6 rounded-full', i <= v ? 'bg-coral-500' : 'bg-navy-100')} />
+        <span key={i} className={classNames('h-2.5 w-6 rounded-full', i <= v ? 'bg-coral-500' : 'bg-navy-100 dark:bg-navy-700')} />
       ))}
       <span className="text-xs text-navy-400 ml-1">{v}/5</span>
     </div>
@@ -12,9 +12,9 @@ function FatigueBar({ value }) {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="bg-sand-50 rounded-xl p-3.5">
+    <div className="bg-sand-50 dark:bg-navy-900 rounded-xl p-3.5">
       <p className="text-xs text-navy-400 font-medium">{label}</p>
-      <p className="text-lg font-heading font-bold text-navy-900 mt-0.5 flex items-center gap-1.5 truncate">{value}</p>
+      <p className="text-lg font-heading font-bold text-navy-900 dark:text-navy-50 mt-0.5 flex items-center gap-1.5 truncate">{value}</p>
     </div>
   );
 }
@@ -72,12 +72,12 @@ function RouteMap({ ports }) {
 
   if (resolved.length === 0) {
     return (
-      <div className="h-48 rounded-xl bg-navy-50 flex items-center justify-center text-navy-400 text-sm gap-2">
+      <div className="h-48 rounded-xl bg-navy-50 dark:bg-navy-900 flex items-center justify-center text-navy-400 text-sm gap-2">
         <Icon.MapPin size={16} /> Position des ports non répertoriée
       </div>
     );
   }
-  return <div ref={ref} className="h-48 rounded-xl overflow-hidden border border-navy-100" />;
+  return <div ref={ref} className="h-48 rounded-xl overflow-hidden border border-navy-100 dark:border-navy-700" />;
 }
 
 function EtapeCard({ leg, index }) {
@@ -87,11 +87,11 @@ function EtapeCard({ leg, index }) {
   const humeur = humeurInfo(skipper.humeur);
 
   return (
-    <div className="bg-white rounded-2xl shadow-soft p-5">
+    <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <div className="flex items-center gap-2 min-w-0">
           <span className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-700 text-white text-xs font-bold flex items-center justify-center shrink-0">{index + 1}</span>
-          <span className="font-heading font-semibold text-navy-900 truncate">{leg.portDepart} <Icon.ChevronRight size={13} className="inline text-ocean-500" /> {leg.portArrivee}</span>
+          <span className="font-heading font-semibold text-navy-900 dark:text-navy-50 truncate">{leg.portDepart} <Icon.ChevronRight size={13} className="inline text-ocean-500" /> {leg.portArrivee}</span>
         </div>
         <span className="text-xs text-navy-400 flex items-center gap-1.5 shrink-0"><Icon.Calendar size={13} /> {formatDateFR(leg.date)}</span>
       </div>
@@ -106,7 +106,7 @@ function EtapeCard({ leg, index }) {
       <div className="grid sm:grid-cols-2 gap-4 mt-4 text-sm">
         <div>
           <p className="text-navy-400 text-xs font-medium mb-1">Météo</p>
-          <p className="text-navy-700">
+          <p className="text-navy-700 dark:text-navy-300">
             {meteo.ventNoeuds != null ? `${meteo.ventNoeuds} nds` : '—'} {meteo.directionVent || ''} · {etatMerLabel(meteo.etatMer)}
           </p>
         </div>
@@ -127,10 +127,107 @@ function EtapeCard({ leg, index }) {
         </div>
       )}
       {skipper.notes && (
-        <p className="mt-3 text-sm text-navy-700 bg-sand-50 rounded-lg p-3">{skipper.notes}</p>
+        <p className="mt-3 text-sm text-navy-700 dark:text-navy-300 bg-sand-50 dark:bg-navy-900 rounded-lg p-3">{skipper.notes}</p>
       )}
       {leg.commentaire && (
-        <p className="mt-2 text-sm text-navy-600 whitespace-pre-wrap">{leg.commentaire}</p>
+        <p className="mt-2 text-sm text-navy-600 dark:text-navy-400 whitespace-pre-wrap">{leg.commentaire}</p>
+      )}
+    </div>
+  );
+}
+
+function PhotoGallery({ outing, onChange }) {
+  const photos = outing.photos || [];
+  const [urls, setUrls] = React.useState({});
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const fileInputRef = React.useRef(null);
+
+  React.useEffect(() => {
+    let active = true;
+    if (photos.length === 0) { setUrls({}); return; }
+    Storage.getSignedUrls(photos)
+      .then((map) => { if (active) setUrls(map); })
+      .catch((err) => console.error('Chargement des photos impossible', err));
+    return () => { active = false; };
+    // eslint-disable-next-line
+  }, [photos.join('|')]);
+
+  const pick = () => fileInputRef.current && fileInputRef.current.click();
+
+  const onFilesChosen = async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!files.length) return;
+    if (!navigator.onLine) {
+      setError('Connexion internet requise pour ajouter des photos.');
+      return;
+    }
+    setUploading(true);
+    setError('');
+    try {
+      const userId = RemoteSync.getUserId();
+      const newPaths = [];
+      for (const file of files) {
+        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        const path = `${userId}/${outing.id}/${uid()}-${safeName}`;
+        await Storage.upload(path, file);
+        newPaths.push(path);
+      }
+      onChange([...photos, ...newPaths]);
+    } catch (err) {
+      console.error('Envoi de photo impossible', err);
+      setError('Envoi impossible — vérifie ta connexion et réessaie.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const removePhoto = async (path) => {
+    onChange(photos.filter((p) => p !== path));
+    try {
+      await Storage.remove([path]);
+    } catch (err) {
+      console.error('Suppression du fichier distant impossible', err);
+    }
+  };
+
+  return (
+    <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2">
+          <Icon.Camera size={17} className="text-ocean-600" /> Photos
+        </h3>
+        <button
+          type="button" onClick={pick} disabled={uploading}
+          className="inline-flex items-center gap-1.5 text-xs font-semibold text-ocean-600 dark:text-ocean-300 hover:text-ocean-700 bg-ocean-50 dark:bg-ocean-900/30 hover:bg-ocean-100 dark:hover:bg-ocean-900/50 px-3 py-1.5 rounded-lg disabled:opacity-60"
+        >
+          <Icon.Plus size={13} /> {uploading ? 'Envoi…' : 'Ajouter'}
+        </button>
+        <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={onFilesChosen} className="hidden" />
+      </div>
+      {error && <p className="text-coral-600 dark:text-coral-300 text-xs mb-2">{error}</p>}
+      {photos.length === 0 ? (
+        <p className="text-navy-400 text-sm">Aucune photo pour cette sortie.</p>
+      ) : (
+        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          {photos.map((path) => (
+            <div key={path} className="relative aspect-square rounded-lg overflow-hidden bg-navy-50 dark:bg-navy-900 group">
+              {urls[path] ? (
+                <img src={urls[path]} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-navy-300"><Icon.Camera size={20} /></div>
+              )}
+              <button
+                type="button" onClick={() => removePhoto(path)}
+                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-navy-950/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Supprimer cette photo"
+              >
+                <Icon.X size={13} />
+              </button>
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
@@ -141,7 +238,7 @@ function DetailHeader({ outing, title, dateLabel, onDelete, confirmOpen, setConf
     <>
       <div className="flex items-start justify-between gap-3 flex-wrap">
         <div className="min-w-0">
-          <div className="font-heading text-2xl font-bold text-navy-900">{title}</div>
+          <div className="font-heading text-2xl font-bold text-navy-900 dark:text-navy-50">{title}</div>
           <p className="text-navy-400 text-sm mt-1.5 flex items-center gap-1.5">
             <Icon.Calendar size={14} /> {dateLabel}
           </p>
@@ -152,7 +249,7 @@ function DetailHeader({ outing, title, dateLabel, onDelete, confirmOpen, setConf
           )}
         </div>
         <div className="flex items-center gap-2">
-          <a href={`#/sortie/${outing.id}/modifier`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-navy-600 bg-navy-50 hover:bg-navy-100">
+          <a href={`#/sortie/${outing.id}/modifier`} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-navy-600 dark:text-navy-300 bg-navy-50 dark:bg-navy-700 hover:bg-navy-100 dark:hover:bg-navy-600">
             <Icon.Pencil size={14} /> Modifier
           </a>
           <button onClick={() => setConfirmOpen(true)} className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-coral-600 bg-coral-400/10 hover:bg-coral-400/20">
@@ -172,7 +269,7 @@ function DetailHeader({ outing, title, dateLabel, onDelete, confirmOpen, setConf
   );
 }
 
-function VoyageDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
+function VoyageDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setConfirmOpen }) {
   const legs = outingLegs(outing);
   const ports = outingPortsVisited(outing);
   const totalNm = outingDistanceTotal(outing);
@@ -185,11 +282,11 @@ function VoyageDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <a href="#/historique" className="inline-flex items-center gap-1.5 text-navy-500 hover:text-navy-800 text-sm font-medium">
+      <a href="#/historique" className="inline-flex items-center gap-1.5 text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-100 text-sm font-medium">
         <Icon.ArrowLeft size={16} /> Retour à l’historique
       </a>
 
-      <div className="bg-white rounded-2xl shadow-soft p-6">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-6">
         <DetailHeader outing={outing} title={outingTitre(outing)} dateLabel={dateLabel} onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6">
@@ -204,8 +301,10 @@ function VoyageDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
         </div>
       </div>
 
+      <PhotoGallery outing={outing} onChange={(photos) => onPhotosChange(outing, photos)} />
+
       <div>
-        <h2 className="font-heading font-semibold text-navy-800 mb-3">Itinéraire</h2>
+        <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100 mb-3">Itinéraire</h2>
         <div className="space-y-4">
           {legs.map((leg, i) => <EtapeCard key={i} leg={leg} index={i} />)}
         </div>
@@ -214,7 +313,7 @@ function VoyageDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
   );
 }
 
-function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
+function SimpleDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setConfirmOpen }) {
   const vitesseMoy = outing.dureeMin > 0 ? (outing.distanceNm / (outing.dureeMin / 60)) : 0;
   const meteo = outing.meteo || {};
   const skipper = outing.skipper || {};
@@ -222,11 +321,11 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-      <a href="#/historique" className="inline-flex items-center gap-1.5 text-navy-500 hover:text-navy-800 text-sm font-medium">
+      <a href="#/historique" className="inline-flex items-center gap-1.5 text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-100 text-sm font-medium">
         <Icon.ArrowLeft size={16} /> Retour à l’historique
       </a>
 
-      <div className="bg-white rounded-2xl shadow-soft p-6">
+      <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-6">
         <DetailHeader
           outing={outing}
           title={<span className="flex items-center gap-2">{outing.portDepart}<Icon.ChevronRight size={20} className="text-ocean-500" />{outing.portArrivee}</span>}
@@ -247,25 +346,25 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
       </div>
 
       <div className="grid sm:grid-cols-2 gap-5">
-        <div className="bg-white rounded-2xl shadow-soft p-5">
-          <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+          <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3">
             <Icon.Wind size={17} className="text-ocean-600" /> Conditions météo
           </h3>
           <dl className="space-y-2.5 text-sm">
-            <div className="flex justify-between"><dt className="text-navy-400">Vent</dt><dd className="font-medium text-navy-800">{meteo.ventNoeuds != null ? `${meteo.ventNoeuds} nds` : '—'}</dd></div>
-            <div className="flex justify-between"><dt className="text-navy-400">Direction</dt><dd className="font-medium text-navy-800">{meteo.directionVent || '—'}</dd></div>
-            <div className="flex justify-between"><dt className="text-navy-400">État de la mer</dt><dd className="font-medium text-navy-800">{etatMerLabel(meteo.etatMer)}</dd></div>
+            <div className="flex justify-between"><dt className="text-navy-400">Vent</dt><dd className="font-medium text-navy-800 dark:text-navy-200">{meteo.ventNoeuds != null ? `${meteo.ventNoeuds} nds` : '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-navy-400">Direction</dt><dd className="font-medium text-navy-800 dark:text-navy-200">{meteo.directionVent || '—'}</dd></div>
+            <div className="flex justify-between"><dt className="text-navy-400">État de la mer</dt><dd className="font-medium text-navy-800 dark:text-navy-200">{etatMerLabel(meteo.etatMer)}</dd></div>
           </dl>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-soft p-5">
-          <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+          <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3">
             <Icon.Gauge size={17} className="text-ocean-600" /> Ressenti du skipper
           </h3>
           <div className="space-y-3 text-sm">
             <div className="flex items-center justify-between">
               <span className="text-navy-400">Humeur</span>
-              <span className="font-medium text-navy-800 flex items-center gap-1.5">{humeur.emoji} {humeur.label}</span>
+              <span className="font-medium text-navy-800 dark:text-navy-200 flex items-center gap-1.5">{humeur.emoji} {humeur.label}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-navy-400">Niveau de fatigue</span>
@@ -274,14 +373,14 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
             {skipper.notes && (
               <div>
                 <span className="text-navy-400 block mb-1">Notes</span>
-                <p className="text-navy-700 bg-sand-50 rounded-lg p-3">{skipper.notes}</p>
+                <p className="text-navy-700 dark:text-navy-300 bg-sand-50 dark:bg-navy-900 rounded-lg p-3">{skipper.notes}</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-soft p-5">
-          <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+          <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3">
             <Icon.Sailboat size={17} className="text-ocean-600" /> Voiles utilisées
           </h3>
           {(outing.voiles || []).length ? (
@@ -291,8 +390,8 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
           ) : <p className="text-navy-400 text-sm">Non renseigné</p>}
         </div>
 
-        <div className="bg-white rounded-2xl shadow-soft p-5">
-          <h3 className="font-heading font-semibold text-navy-800 flex items-center gap-2 mb-3">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+          <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2 mb-3">
             <Icon.Users size={17} className="text-ocean-600" /> Équipage
           </h3>
           {(outing.equipage || []).length ? (
@@ -304,16 +403,18 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
       </div>
 
       {outing.commentaire && (
-        <div className="bg-white rounded-2xl shadow-soft p-5">
-          <h3 className="font-heading font-semibold text-navy-800 mb-2">Commentaire</h3>
-          <p className="text-navy-700 text-sm whitespace-pre-wrap">{outing.commentaire}</p>
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
+          <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 mb-2">Commentaire</h3>
+          <p className="text-navy-700 dark:text-navy-300 text-sm whitespace-pre-wrap">{outing.commentaire}</p>
         </div>
       )}
+
+      <PhotoGallery outing={outing} onChange={(photos) => onPhotosChange(outing, photos)} />
     </div>
   );
 }
 
-function OutingDetailPage({ outing, onDelete }) {
+function OutingDetailPage({ outing, onDelete, onPhotosChange }) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   if (!outing) {
@@ -325,7 +426,7 @@ function OutingDetailPage({ outing, onDelete }) {
   }
 
   if (isVoyage(outing)) {
-    return <VoyageDetailPage outing={outing} onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
+    return <VoyageDetailPage outing={outing} onDelete={onDelete} onPhotosChange={onPhotosChange} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
   }
-  return <SimpleDetailPage outing={outing} onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
+  return <SimpleDetailPage outing={outing} onDelete={onDelete} onPhotosChange={onPhotosChange} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
 }

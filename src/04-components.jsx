@@ -40,7 +40,7 @@ function NavLink({ href, active, children, icon: IconCmp }) {
   );
 }
 
-function Navbar({ route }) {
+function Navbar({ route, userEmail, onSignOut }) {
   const [open, setOpen] = React.useState(false);
   const links = [
     { href: '#/', label: 'Tableau de bord', icon: Icon.Home, match: (r) => r.name === 'dashboard' },
@@ -62,6 +62,16 @@ function Navbar({ route }) {
             ))}
           </nav>
           <div className="flex items-center gap-2 justify-self-end">
+            {userEmail && (
+              <button
+                onClick={onSignOut}
+                title={userEmail}
+                className="hidden sm:inline-flex items-center gap-1.5 text-navy-300 hover:text-white text-xs font-medium px-2.5 py-2 rounded-lg hover:bg-white/5 transition-colors max-w-[10rem]"
+              >
+                <span className="truncate">{userEmail}</span>
+                <Icon.X size={13} className="shrink-0" />
+              </button>
+            )}
             <NewOutingButton display="hidden sm:inline-flex" />
             <button
               className="md:hidden text-navy-100 p-2"
@@ -78,6 +88,14 @@ function Navbar({ route }) {
               <NavLink key={l.href} href={l.href} icon={l.icon} active={l.match(route)}>{l.label}</NavLink>
             ))}
             <NewOutingButton display="flex" className="mt-1" />
+            {userEmail && (
+              <button
+                onClick={onSignOut}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium text-navy-200 hover:text-white hover:bg-white/5 transition-all"
+              >
+                <Icon.X size={16} /> Déconnexion ({userEmail})
+              </button>
+            )}
           </nav>
         )}
       </div>

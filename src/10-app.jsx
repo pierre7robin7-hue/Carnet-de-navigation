@@ -16,7 +16,7 @@ function Footer() {
     <footer className="no-print border-t border-navy-100 mt-10">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-center gap-2 text-navy-400 text-xs">
         <Icon.Anchor size={14} />
-        Carnet de Navigation — vos données sont stockées localement, uniquement dans ce navigateur.
+        Carnet de Navigation — vos données sont liées à votre compte et synchronisées entre vos appareils.
       </div>
     </footer>
   );
@@ -25,19 +25,55 @@ function Footer() {
 function App() {
   const [route, setRoute] = React.useState(() => parseRoute(window.location.hash));
   const [outings, setOutings] = React.useState([]);
+  const [session, setSession] = React.useState(undefined); // undefined = chargement, null = déconnecté
+  const [migratePrompt, setMigratePrompt] = React.useState(false);
+  const [migrating, setMigrating] = React.useState(false);
 
   const refresh = React.useCallback(() => setOutings(Store.getAll()), []);
 
+  // Récupération et suivi de la session de connexion.
   React.useEffect(() => {
-    Store.seedIfEmpty();
-    refresh();
+    let active = true;
+    Auth.getSession().then((s) => { if (active) setSession(s); });
+    Auth.onChange((s) => { if (active) setSession(s); });
+    return () => { active = false; };
+  }, []);
+
+  // Une fois connecté : on rapatrie les données du compte. Si le compte est
+  // vide mais que ce navigateur contient déjà des sorties (usage avant la
+  // mise en place des comptes), on propose de les envoyer plutôt que de les
+  // écraser silencieusement.
+  React.useEffect(() => {
+    if (!session) return;
+    let active = true;
+    (async () => {
+      try {
+        const remote = await RemoteSync.fetchAll();
+        if (!active) return;
+        const hasLocalData = Store.getAll().length > 0;
+        if (remote.sorties.length === 0 && hasLocalData) {
+          setMigratePrompt(true);
+        } else {
+          Store.replaceAllLocal(remote.sorties);
+          CustomPorts.replaceAllLocal(remote.ports);
+        }
+      } catch (err) {
+        console.error('Récupération des données du compte impossible', err);
+      } finally {
+        if (active) refresh();
+      }
+    })();
+    return () => { active = false; };
+  }, [session, refresh]);
+
+  React.useEffect(() => {
     const onHashChange = () => {
       setRoute(parseRoute(window.location.hash));
       window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
     };
     window.addEventListener('hashchange', onHashChange);
     return () => window.removeEventListener('hashchange', onHashChange);
-  }, [refresh]);
+  }, []);
 
   const handleCreate = (data) => {
     const created = Store.create(data);
@@ -56,6 +92,40 @@ function App() {
     refresh();
     window.location.hash = '#/historique';
   };
+
+  const handleMigrateConfirm = async () => {
+    setMigrating(true);
+    try {
+      await RemoteSync.pushAllLocal(Store.getAll(), CustomPorts.getAll());
+      setMigratePrompt(false);
+    } catch (err) {
+      console.error('Envoi des données existantes impossible', err);
+      alert("L'envoi vers ton compte a échoué (vérifie ta connexion) — réessaie depuis l'onglet Export.");
+    } finally {
+      setMigrating(false);
+    }
+  };
+
+  const handleMigrateSkip = () => setMigratePrompt(false);
+
+  const handleSignOut = async () => {
+    await Auth.signOut();
+    Store.clearAll();
+    CustomPorts.replaceAllLocal([]);
+    refresh();
+  };
+
+  if (session === undefined) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-navy-400">
+        Chargement du carnet de navigation…
+      </div>
+    );
+  }
+
+  if (!session) {
+    return <LoginPage />;
+  }
 
   let page = null;
   if (route.name === 'dashboard') {
@@ -78,9 +148,17 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar route={route} />
+      <Navbar route={route} userEmail={session.user.email} onSignOut={handleSignOut} />
       <main className="flex-1">{page}</main>
       <Footer />
+      <ConfirmDialog
+        open={migratePrompt}
+        title="Reprendre tes sorties existantes ?"
+        description="Ce navigateur contient des sorties enregistrées avant la connexion, et ton compte est encore vide. Veux-tu les envoyer vers ton compte pour les retrouver sur tous tes appareils ?"
+        confirmLabel={migrating ? 'Envoi en cours…' : 'Envoyer vers mon compte'}
+        onCancel={handleMigrateSkip}
+        onConfirm={handleMigrateConfirm}
+      />
     </div>
   );
 }

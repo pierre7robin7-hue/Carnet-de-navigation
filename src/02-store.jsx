@@ -45,8 +45,10 @@ const CustomPorts = {
     if (!name || findPort(name)) return;
     const list = readCustomPorts();
     if (list.some((p) => p.name.toLowerCase() === name.toLowerCase())) return;
-    list.push({ name, lat: null, lon: null });
+    const port = { name, lat: null, lon: null };
+    list.push(port);
     writeCustomPorts(list);
+    RemoteSync.pushPort(port);
   },
   setCoords(name, lat, lon) {
     const list = readCustomPorts();
@@ -54,6 +56,12 @@ const CustomPorts = {
     if (idx === -1) list.push({ name, lat, lon });
     else list[idx] = { ...list[idx], lat, lon };
     writeCustomPorts(list);
+    RemoteSync.pushPort({ name, lat, lon });
+  },
+  // Remplace le cache local sans re-déclencher de synchronisation vers
+  // Supabase : utilisé après connexion, quand on rapatrie les données du compte.
+  replaceAllLocal(list) {
+    writeCustomPorts(Array.isArray(list) ? list : []);
   },
 };
 
@@ -172,6 +180,7 @@ const Store = {
     list.push(outing);
     writeAll(list);
     registerPortsFromOuting(outing);
+    RemoteSync.pushOuting(outing);
     return outing;
   },
   update(id, data) {
@@ -185,11 +194,13 @@ const Store = {
     list[idx] = updated;
     writeAll(list);
     registerPortsFromOuting(updated);
+    RemoteSync.pushOuting(updated);
     return updated;
   },
   remove(id) {
     const list = readAll().filter((s) => s.id !== id);
     writeAll(list);
+    RemoteSync.deleteOuting(id);
   },
   seedIfEmpty() {
     const list = readAll();
@@ -199,6 +210,11 @@ const Store = {
   },
   clearAll() {
     writeAll([]);
+  },
+  // Remplace le cache local sans re-déclencher de synchronisation vers
+  // Supabase : utilisé après connexion, quand on rapatrie les données du compte.
+  replaceAllLocal(list) {
+    writeAll(Array.isArray(list) ? list : []);
   },
   exportData() {
     return {
@@ -215,5 +231,7 @@ const Store = {
     }
     writeAll(data.sorties);
     if (Array.isArray(data.portsPersonnalises)) writeCustomPorts(data.portsPersonnalises);
+    RemoteSync.pushAllLocal(data.sorties, Array.isArray(data.portsPersonnalises) ? data.portsPersonnalises : [])
+      .catch((err) => console.error('Synchronisation après import impossible', err));
   },
 };

@@ -30,44 +30,55 @@ function RouteMap({ ports }) {
 
   React.useEffect(() => {
     if (!ref.current || resolved.length === 0) return;
-    const map = L.map(ref.current, { zoomControl: false, attributionControl: false, dragging: true, scrollWheelZoom: false });
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+    let map = null;
+    let raf = null;
+    let cancelled = false;
 
-    const latlngs = resolved.map((p) => [p.pos.lat, p.pos.lon]);
-    let line = null;
-    if (latlngs.length >= 2) {
-      line = L.polyline(latlngs, { color: '#0f63d1', weight: 3, dashArray: '6 6', lineCap: 'round' }).addTo(map);
-      map.fitBounds(line.getBounds(), { padding: [30, 30] });
-    } else {
-      map.setView(latlngs[0], 11);
-    }
+    // Leaflet est chargé à la demande (voir 09-page-map.jsx) : cette carte
+    // peut être la première du parcours de l'utilisateur, donc `L` n'est pas
+    // forcément déjà disponible au moment du montage.
+    loadLeaflet().then(() => {
+      if (cancelled || !ref.current) return;
+      map = L.map(ref.current, { zoomControl: false, attributionControl: false, dragging: true, scrollWheelZoom: false });
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
 
-    const multi = resolved.length > 2;
-    // Un aller-retour / une boucle revisite parfois le même port : sans
-    // correction, les points se superposent exactement et cachent leur
-    // numéro. On les fait légèrement "s'éventailler" via l'ancre de l'icône
-    // (position géographique réelle inchangée, seul l'affichage se décale).
-    const seenAt = {};
-    resolved.forEach((p, i) => {
-      const isFirst = i === 0, isLast = i === resolved.length - 1;
-      const color = isFirst ? '#19655e' : isLast ? '#e6674a' : '#0f63d1';
-      const posKey = `${p.pos.lat.toFixed(4)},${p.pos.lon.toFixed(4)}`;
-      const occurrence = seenAt[posKey] || 0;
-      seenAt[posKey] = occurrence + 1;
-      const half = multi ? 10 : 7;
-      const nudge = occurrence * 9;
-      const html = multi
-        ? `<div style="width:20px;height:20px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;">${i + 1}</div>`
-        : `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`;
-      const icon = L.divIcon({ className: '', html, iconSize: multi ? [20, 20] : [14, 14], iconAnchor: [half + nudge, half + nudge] });
-      L.marker([p.pos.lat, p.pos.lon], { icon }).addTo(map).bindPopup(p.name);
-    });
+      const latlngs = resolved.map((p) => [p.pos.lat, p.pos.lon]);
+      let line = null;
+      if (latlngs.length >= 2) {
+        line = L.polyline(latlngs, { color: '#0f63d1', weight: 3, dashArray: '6 6', lineCap: 'round' }).addTo(map);
+        map.fitBounds(line.getBounds(), { padding: [30, 30] });
+      } else {
+        map.setView(latlngs[0], 11);
+      }
 
-    const raf = requestAnimationFrame(() => {
-      map.invalidateSize();
-      if (line) map.fitBounds(line.getBounds(), { padding: [30, 30] });
-    });
-    return () => { cancelAnimationFrame(raf); map.remove(); };
+      const multi = resolved.length > 2;
+      // Un aller-retour / une boucle revisite parfois le même port : sans
+      // correction, les points se superposent exactement et cachent leur
+      // numéro. On les fait légèrement "s'éventailler" via l'ancre de l'icône
+      // (position géographique réelle inchangée, seul l'affichage se décale).
+      const seenAt = {};
+      resolved.forEach((p, i) => {
+        const isFirst = i === 0, isLast = i === resolved.length - 1;
+        const color = isFirst ? '#19655e' : isLast ? '#e6674a' : '#0f63d1';
+        const posKey = `${p.pos.lat.toFixed(4)},${p.pos.lon.toFixed(4)}`;
+        const occurrence = seenAt[posKey] || 0;
+        seenAt[posKey] = occurrence + 1;
+        const half = multi ? 10 : 7;
+        const nudge = occurrence * 9;
+        const html = multi
+          ? `<div style="width:20px;height:20px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;">${i + 1}</div>`
+          : `<div style="width:14px;height:14px;border-radius:50%;background:${color};border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.4)"></div>`;
+        const icon = L.divIcon({ className: '', html, iconSize: multi ? [20, 20] : [14, 14], iconAnchor: [half + nudge, half + nudge] });
+        L.marker([p.pos.lat, p.pos.lon], { icon }).addTo(map).bindPopup(p.name);
+      });
+
+      raf = requestAnimationFrame(() => {
+        map.invalidateSize();
+        if (line) map.fitBounds(line.getBounds(), { padding: [30, 30] });
+      });
+    }).catch((err) => console.error('Chargement de la carte impossible', err));
+
+    return () => { cancelled = true; if (raf) cancelAnimationFrame(raf); if (map) map.remove(); };
   }, [resolved]);
 
   if (resolved.length === 0) {

@@ -125,21 +125,9 @@ function App() {
   };
 
   const handleDelete = (id) => {
-    const existing = outings.find((o) => o.id === id);
-    if (existing && existing.photos && existing.photos.length) {
-      // Best-effort : on ne bloque jamais la suppression sur le nettoyage
-      // des fichiers distants (sinon perdus dans le quota gratuit, mais sans
-      // gravité — pas de donnée utilisateur perdue).
-      Storage.remove(existing.photos).catch((err) => console.error('Nettoyage des photos distantes impossible', err));
-    }
     Store.remove(id);
     refresh();
     window.location.hash = '#/historique';
-  };
-
-  const handlePhotosChange = (outing, photos) => {
-    Store.update(outing.id, { ...outing, photos });
-    refresh();
   };
 
   const handleMigrateConfirm = async () => {
@@ -192,7 +180,7 @@ function App() {
     page = <OutingFormPage existing={existing} onSubmit={(data) => handleUpdate(route.id, data)} />;
   } else if (route.name === 'detail') {
     const outing = outings.find((o) => o.id === route.id) || null;
-    page = <OutingDetailPage outing={outing} onDelete={handleDelete} onPhotosChange={handlePhotosChange} />;
+    page = <OutingDetailPage outing={outing} onDelete={handleDelete} />;
   }
 
   const showFab = route.name !== 'new' && route.name !== 'edit';

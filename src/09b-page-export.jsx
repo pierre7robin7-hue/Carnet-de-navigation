@@ -10,6 +10,118 @@ function downloadJSON(data, filename) {
   URL.revokeObjectURL(url);
 }
 
+function seasonYears(outings) {
+  const years = new Set();
+  outings.forEach((o) => {
+    const d = outingSortDate(o);
+    if (d) years.add(d.slice(0, 4));
+  });
+  return Array.from(years).sort((a, b) => b.localeCompare(a));
+}
+
+function computeSeasonStats(outings, year) {
+  const inYear = outings.filter((o) => (outingSortDate(o) || '').slice(0, 4) === year);
+  const totalSorties = inYear.length;
+  const totalNm = inYear.reduce((sum, o) => sum + outingDistanceTotal(o), 0);
+  const totalDuree = inYear.reduce((sum, o) => sum + outingDureeTotal(o), 0);
+
+  const portCounts = {};
+  inYear.forEach((o) => outingLegs(o).forEach((l) => {
+    [l.portDepart, l.portArrivee].forEach((p) => { if (p) portCounts[p] = (portCounts[p] || 0) + 1; });
+  }));
+  let topPort = null, topPortCount = 0;
+  Object.entries(portCounts).forEach(([port, count]) => {
+    if (count > topPortCount) { topPort = port; topPortCount = count; }
+  });
+
+  const boatCounts = {};
+  inYear.forEach((o) => {
+    const b = (o.bateauModele || '').trim();
+    if (b) boatCounts[b] = (boatCounts[b] || 0) + 1;
+  });
+  let topBoat = null, topBoatCount = 0;
+  Object.entries(boatCounts).forEach(([b, c]) => { if (c > topBoatCount) { topBoat = b; topBoatCount = c; } });
+
+  let longest = null;
+  inYear.forEach((o) => { if (!longest || outingDistanceTotal(o) > outingDistanceTotal(longest)) longest = o; });
+
+  const portsVisited = new Set();
+  inYear.forEach((o) => outingPortsVisited(o).forEach((p) => portsVisited.add(p)));
+
+  return {
+    totalSorties, totalNm, totalDuree, topPort, topPortCount, topBoat, topBoatCount,
+    longest, portsVisitedCount: portsVisited.size,
+  };
+}
+
+function SeasonSummary({ outings }) {
+  const years = React.useMemo(() => seasonYears(outings), [outings]);
+  const [year, setYear] = React.useState(years[0] || String(new Date().getFullYear()));
+  const stats = React.useMemo(() => computeSeasonStats(outings, year), [outings, year]);
+
+  if (years.length === 0) return null;
+
+  return (
+    <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 space-y-4 print-sheet">
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2">
+          <Icon.BarChart size={17} className="text-ocean-600" /> Bilan de saison
+        </h2>
+        <select
+          value={year} onChange={(e) => setYear(e.target.value)}
+          className="text-sm font-medium border border-navy-100 dark:border-navy-700 bg-white dark:bg-navy-900 text-navy-700 dark:text-navy-200 rounded-lg px-3 py-1.5"
+        >
+          {years.map((y) => <option key={y} value={y}>{y}</option>)}
+        </select>
+      </div>
+
+      {stats.totalSorties === 0 ? (
+        <p className="text-navy-400 text-sm">Aucune navigation en {year}.</p>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+          <div>
+            <p className="text-navy-400 text-xs uppercase tracking-wide">Sorties</p>
+            <p className="text-xl font-heading font-bold text-navy-900 dark:text-navy-50">{stats.totalSorties}</p>
+          </div>
+          <div>
+            <p className="text-navy-400 text-xs uppercase tracking-wide">Distance cumulée</p>
+            <p className="text-xl font-heading font-bold text-navy-900 dark:text-navy-50">{formatNm(stats.totalNm)}</p>
+          </div>
+          <div>
+            <p className="text-navy-400 text-xs uppercase tracking-wide">Temps en mer</p>
+            <p className="text-xl font-heading font-bold text-navy-900 dark:text-navy-50">{formatDuree(stats.totalDuree)}</p>
+          </div>
+          <div>
+            <p className="text-navy-400 text-xs uppercase tracking-wide">Ports visités</p>
+            <p className="text-xl font-heading font-bold text-navy-900 dark:text-navy-50">{stats.portsVisitedCount}</p>
+          </div>
+          <div>
+            <p className="text-navy-400 text-xs uppercase tracking-wide">Port le plus fréquenté</p>
+            <p className="text-base font-semibold text-navy-800 dark:text-navy-100 truncate">{stats.topPort || '—'}</p>
+            {stats.topPort && <p className="text-xs text-navy-400">{stats.topPortCount} passage{stats.topPortCount > 1 ? 's' : ''}</p>}
+          </div>
+          {stats.topBoat && (
+            <div>
+              <p className="text-navy-400 text-xs uppercase tracking-wide">Bateau le plus utilisé</p>
+              <p className="text-base font-semibold text-navy-800 dark:text-navy-100 truncate">{stats.topBoat}</p>
+              <p className="text-xs text-navy-400">{stats.topBoatCount} sortie{stats.topBoatCount > 1 ? 's' : ''}</p>
+            </div>
+          )}
+          {stats.longest && (
+            <div className="col-span-2 sm:col-span-3">
+              <p className="text-navy-400 text-xs uppercase tracking-wide">Plus longue sortie</p>
+              <p className="text-base font-semibold text-navy-800 dark:text-navy-100">
+                {isVoyage(stats.longest) ? outingTitre(stats.longest) : `${stats.longest.portDepart} → ${stats.longest.portArrivee}`}
+                <span className="text-navy-400 font-normal"> — {formatNm(outingDistanceTotal(stats.longest))}, {formatDateFR(outingSortDate(stats.longest))}</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function PrintRow({ outing }) {
   const legs = outingLegs(outing);
   return (
@@ -120,6 +232,8 @@ function ExportPage({ outings, onImported }) {
           <input ref={fileInputRef} type="file" accept="application/json" onChange={onFileChosen} className="hidden" />
         </div>
       </section>
+
+      <SeasonSummary outings={outings} />
 
       <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 space-y-4 print-sheet">
         <div className="no-print flex items-center justify-between flex-wrap gap-3">

@@ -174,27 +174,3 @@ const RemoteSync = {
     }
   },
 };
-
-// Photos jointes aux sorties : nécessite le bucket Storage "photos-sorties"
-// (créé manuellement dans Supabase, voir le guide). Bucket privé : chaque
-// photo est servie via une URL signée temporaire plutôt qu'une URL publique.
-const PHOTOS_BUCKET = 'photos-sorties';
-
-const Storage = {
-  async upload(path, file) {
-    const { error } = await supabaseClient.storage.from(PHOTOS_BUCKET).upload(path, file, { upsert: false });
-    if (error) throw error;
-  },
-  async remove(paths) {
-    const { error } = await supabaseClient.storage.from(PHOTOS_BUCKET).remove(paths);
-    if (error) throw error;
-  },
-  async getSignedUrls(paths) {
-    if (!paths || !paths.length) return {};
-    const { data, error } = await supabaseClient.storage.from(PHOTOS_BUCKET).createSignedUrls(paths, 3600);
-    if (error) throw error;
-    const map = {};
-    (data || []).forEach((d) => { if (d.signedUrl) map[d.path || d.signedUrl] = d.signedUrl; });
-    return map;
-  },
-};

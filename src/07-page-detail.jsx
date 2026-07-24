@@ -136,103 +136,6 @@ function EtapeCard({ leg, index }) {
   );
 }
 
-function PhotoGallery({ outing, onChange }) {
-  const photos = outing.photos || [];
-  const [urls, setUrls] = React.useState({});
-  const [uploading, setUploading] = React.useState(false);
-  const [error, setError] = React.useState('');
-  const fileInputRef = React.useRef(null);
-
-  React.useEffect(() => {
-    let active = true;
-    if (photos.length === 0) { setUrls({}); return; }
-    Storage.getSignedUrls(photos)
-      .then((map) => { if (active) setUrls(map); })
-      .catch((err) => console.error('Chargement des photos impossible', err));
-    return () => { active = false; };
-    // eslint-disable-next-line
-  }, [photos.join('|')]);
-
-  const pick = () => fileInputRef.current && fileInputRef.current.click();
-
-  const onFilesChosen = async (e) => {
-    const files = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (!files.length) return;
-    if (!navigator.onLine) {
-      setError('Connexion internet requise pour ajouter des photos.');
-      return;
-    }
-    setUploading(true);
-    setError('');
-    try {
-      const userId = RemoteSync.getUserId();
-      const newPaths = [];
-      for (const file of files) {
-        const safeName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, '_');
-        const path = `${userId}/${outing.id}/${uid()}-${safeName}`;
-        await Storage.upload(path, file);
-        newPaths.push(path);
-      }
-      onChange([...photos, ...newPaths]);
-    } catch (err) {
-      console.error('Envoi de photo impossible', err);
-      setError('Envoi impossible — vérifie ta connexion et réessaie.');
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const removePhoto = async (path) => {
-    onChange(photos.filter((p) => p !== path));
-    try {
-      await Storage.remove([path]);
-    } catch (err) {
-      console.error('Suppression du fichier distant impossible', err);
-    }
-  };
-
-  return (
-    <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 flex items-center gap-2">
-          <Icon.Camera size={17} className="text-ocean-600" /> Photos
-        </h3>
-        <button
-          type="button" onClick={pick} disabled={uploading}
-          className="inline-flex items-center gap-1.5 text-xs font-semibold text-ocean-600 dark:text-ocean-300 hover:text-ocean-700 bg-ocean-50 dark:bg-ocean-900/30 hover:bg-ocean-100 dark:hover:bg-ocean-900/50 px-3 py-1.5 rounded-lg disabled:opacity-60"
-        >
-          <Icon.Plus size={13} /> {uploading ? 'Envoi…' : 'Ajouter'}
-        </button>
-        <input ref={fileInputRef} type="file" accept="image/*" multiple onChange={onFilesChosen} className="hidden" />
-      </div>
-      {error && <p className="text-coral-600 dark:text-coral-300 text-xs mb-2">{error}</p>}
-      {photos.length === 0 ? (
-        <p className="text-navy-400 text-sm">Aucune photo pour cette sortie.</p>
-      ) : (
-        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-          {photos.map((path) => (
-            <div key={path} className="relative aspect-square rounded-lg overflow-hidden bg-navy-50 dark:bg-navy-900 group">
-              {urls[path] ? (
-                <img src={urls[path]} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-navy-300"><Icon.Camera size={20} /></div>
-              )}
-              <button
-                type="button" onClick={() => removePhoto(path)}
-                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-navy-950/70 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                aria-label="Supprimer cette photo"
-              >
-                <Icon.X size={13} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
 function DetailHeader({ outing, title, dateLabel, onDelete, confirmOpen, setConfirmOpen }) {
   return (
     <>
@@ -269,7 +172,7 @@ function DetailHeader({ outing, title, dateLabel, onDelete, confirmOpen, setConf
   );
 }
 
-function VoyageDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setConfirmOpen }) {
+function VoyageDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
   const legs = outingLegs(outing);
   const ports = outingPortsVisited(outing);
   const totalNm = outingDistanceTotal(outing);
@@ -301,8 +204,6 @@ function VoyageDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setCo
         </div>
       </div>
 
-      <PhotoGallery outing={outing} onChange={(photos) => onPhotosChange(outing, photos)} />
-
       <div>
         <h2 className="font-heading font-semibold text-navy-800 dark:text-navy-100 mb-3">Itinéraire</h2>
         <div className="space-y-4">
@@ -313,7 +214,7 @@ function VoyageDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setCo
   );
 }
 
-function SimpleDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setConfirmOpen }) {
+function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
   const vitesseMoy = outing.dureeMin > 0 ? (outing.distanceNm / (outing.dureeMin / 60)) : 0;
   const meteo = outing.meteo || {};
   const skipper = outing.skipper || {};
@@ -409,12 +310,11 @@ function SimpleDetailPage({ outing, onDelete, onPhotosChange, confirmOpen, setCo
         </div>
       )}
 
-      <PhotoGallery outing={outing} onChange={(photos) => onPhotosChange(outing, photos)} />
     </div>
   );
 }
 
-function OutingDetailPage({ outing, onDelete, onPhotosChange }) {
+function OutingDetailPage({ outing, onDelete }) {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
 
   if (!outing) {
@@ -426,7 +326,7 @@ function OutingDetailPage({ outing, onDelete, onPhotosChange }) {
   }
 
   if (isVoyage(outing)) {
-    return <VoyageDetailPage outing={outing} onDelete={onDelete} onPhotosChange={onPhotosChange} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
+    return <VoyageDetailPage outing={outing} onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
   }
-  return <SimpleDetailPage outing={outing} onDelete={onDelete} onPhotosChange={onPhotosChange} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
+  return <SimpleDetailPage outing={outing} onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen} />;
 }

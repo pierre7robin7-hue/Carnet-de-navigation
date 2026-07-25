@@ -117,12 +117,13 @@ const NAV_LINKS = [
   { href: '#/export', label: 'Export', shortLabel: 'Export', icon: Icon.Download, match: (r) => r.name === 'export' },
 ];
 
-// "Ajouter une sortie" n'a de sens que là où on consulte une liste de
-// sorties : inutile sur la Carte ou l'Export, où le bouton n'aurait rien à
-// faire de plus près de son contenu (même logique que le bouton flottant
-// mobile, voir FabNewOuting).
+// "Ajouter une sortie" ne s'affiche que sur le tableau de bord : sur
+// l'Historique on consulte/filtre des sorties existantes (la liste peut être
+// longue), et sur la Carte / l'Export le bouton n'aurait rien à faire de
+// plus près de son contenu (même logique que le bouton flottant mobile, voir
+// FabNewOuting).
 function isOutingListRoute(route) {
-  return route.name === 'dashboard' || route.name === 'history';
+  return route.name === 'dashboard';
 }
 
 function Navbar({ route, userEmail, onSignOut, syncBadge }) {
@@ -132,8 +133,8 @@ function Navbar({ route, userEmail, onSignOut, syncBadge }) {
         <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
           <a href="#/" className="flex items-center gap-2 text-white font-heading font-semibold text-lg tracking-tight justify-self-start">
             <span className="text-ocean-400"><Icon.Sailboat size={24} /></span>
-            <span className="hidden sm:inline">Carnet de Navigation</span>
-            <span className="sm:hidden">Carnet Nav</span>
+            <span className="hidden sm:inline">Carnet de Navigations</span>
+            <span className="sm:hidden">Carnet Navs</span>
           </a>
           <nav className="hidden md:flex items-center gap-1 justify-self-center">
             {NAV_LINKS.map((l) => (
@@ -377,7 +378,12 @@ function ConfirmDialog({ open, title, description, confirmLabel = 'Confirmer', o
 
 function Field({ label, children, required, hint }) {
   return (
-    <label className="block">
+    // `min-w-0` : dans une grille, un enfant ne rétrécit jamais sous la
+    // largeur intrinsèque de son contenu par défaut — et un <input
+    // type="date"> natif (surtout sur iOS) a une largeur intrinsèque bien
+    // plus grande que sa colonne, ce qui poussait toute la grille (et donc
+    // la carte de filtres) à déborder de l'écran sur mobile.
+    <label className="block min-w-0">
       <span className="text-sm font-medium text-navy-700 dark:text-navy-300">{label}{required && <span className="text-coral-500"> *</span>}</span>
       <div className="mt-1.5">{children}</div>
       {hint && <span className="text-xs text-navy-400 mt-1 block">{hint}</span>}

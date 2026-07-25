@@ -226,6 +226,64 @@ function PrintMonthGroup({ monthKey, outings }) {
   );
 }
 
+// Sur mobile, le tableau à colonnes fixes (pensé pour une page imprimée
+// large) devient illisible : trop de colonnes pour ~350px, texte minuscule.
+// On lui substitue à l'écran une liste de cartes (une par étape), au même
+// gabarit que le reste de l'app — le tableau reste réservé au grand écran et
+// à l'impression, où il a la place de respirer.
+function PrintLegMobileCard({ leg, boat }) {
+  const humeur = humeurInfo(leg.skipper && leg.skipper.humeur);
+  return (
+    <div className="bg-sand-50 dark:bg-navy-900 rounded-xl p-3.5">
+      <div className="flex items-start justify-between gap-2">
+        <p className="font-medium text-sm text-navy-900 dark:text-navy-50 min-w-0">{leg.portDepart} → {leg.portArrivee}</p>
+        <span className="text-lg leading-none shrink-0">{humeur.emoji}</span>
+      </div>
+      <p className="text-xs text-navy-400 mt-1">{printDateLabel(leg.date)}{boat ? ` · ${boat}` : ''}</p>
+      <div className="flex flex-wrap gap-1.5 mt-2.5">
+        <Badge tone="ocean">{formatNm(leg.distanceNm)}</Badge>
+        <Badge tone="navy"><Icon.Clock size={12} />{formatDuree(leg.dureeMin)}</Badge>
+        {leg.meteo && leg.meteo.ventNoeuds != null && (
+          <Badge tone="sand"><Icon.Wind size={12} />{leg.meteo.ventNoeuds} nds {leg.meteo.directionVent || ''}</Badge>
+        )}
+      </div>
+      {leg.commentaire && <p className="text-sm text-navy-600 dark:text-navy-300 mt-2.5">{leg.commentaire}</p>}
+    </div>
+  );
+}
+
+function PrintOutingMobileCards({ outing }) {
+  const legs = outingLegs(outing);
+  return (
+    <>
+      {isVoyage(outing) && (
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-navy-800 dark:text-navy-100">
+          <span className="w-1.5 h-1.5 rounded-full bg-ocean-600 inline-block shrink-0" />
+          {outingTitre(outing)}{outing.bateauModele ? ` — ${outing.bateauModele}` : ''}
+        </p>
+      )}
+      {legs.map((l, i) => (
+        <PrintLegMobileCard key={i} leg={l} boat={!isVoyage(outing) ? (outing.bateauModele || null) : null} />
+      ))}
+    </>
+  );
+}
+
+function PrintMonthGroupMobile({ monthKey, outings }) {
+  const totalNm = outings.reduce((sum, o) => sum + outingDistanceTotal(o), 0);
+  return (
+    <div className="mb-6 last:mb-0">
+      <div className="flex items-baseline justify-between border-b-2 border-navy-800 dark:border-navy-200 pb-1.5 mb-3">
+        <h3 className="font-heading font-bold text-xs uppercase tracking-wide text-navy-900 dark:text-navy-50">{monthGroupLabel(monthKey)}</h3>
+        <span className="text-[11px] text-navy-400">{outings.length} sortie{outings.length > 1 ? 's' : ''} · {formatNm(totalNm)}</span>
+      </div>
+      <div className="space-y-2.5">
+        {outings.map((o) => <PrintOutingMobileCards key={o.id} outing={o} />)}
+      </div>
+    </div>
+  );
+}
+
 // Bandeau de chiffres clés, visible uniquement à l'impression : reprend les
 // mêmes totaux que la carte "Bilan de saison" (écran), mais intégrés au
 // même cadre que le tableau plutôt que dans une carte séparée.
@@ -375,11 +433,18 @@ function ExportPage({ outings, onImported }) {
         {printable.length === 0 ? (
           <p className="text-navy-400 text-sm">Aucune navigation à imprimer pour le moment.</p>
         ) : (
-          <div className="overflow-x-auto print:overflow-visible mt-5 print:mt-4">
-            {monthGroups.map(([key, group]) => (
-              <PrintMonthGroup key={key} monthKey={key} outings={group} />
-            ))}
-          </div>
+          <>
+            <div className="sm:hidden print:hidden mt-5">
+              {monthGroups.map(([key, group]) => (
+                <PrintMonthGroupMobile key={key} monthKey={key} outings={group} />
+              ))}
+            </div>
+            <div className="hidden sm:block print:block overflow-x-auto print:overflow-visible mt-5 print:mt-4">
+              {monthGroups.map(([key, group]) => (
+                <PrintMonthGroup key={key} monthKey={key} outings={group} />
+              ))}
+            </div>
+          </>
         )}
       </section>
 

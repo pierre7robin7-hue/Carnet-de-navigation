@@ -182,7 +182,10 @@ function App() {
   // Masqué sur la carte et la fiche détail : les deux affichent une carte
   // Leaflet tactile (glisser/zoom) dans ce même coin bas-droit, que le bouton
   // flottant viendrait autrement recouvrir et gêner.
-  const showFab = route.name !== 'new' && route.name !== 'edit' && route.name !== 'map' && route.name !== 'detail';
+  // Visible seulement là où "ajouter une sortie" est une action naturelle
+  // (les deux pages qui listent des sorties) : inutile sur Export, et gênant
+  // sur la Carte / une fiche détail (cartes tactiles dans ce même coin).
+  const showFab = isOutingListRoute(route);
 
   return (
     <div className="min-h-screen flex flex-col">

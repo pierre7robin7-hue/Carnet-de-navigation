@@ -182,7 +182,7 @@ function MapPage({ outings }) {
       {outings.length === 0 ? (
         <EmptyState title="Aucune navigation à afficher" description="Ajoutez des sorties pour voir vos ports apparaître sur la carte." />
       ) : (
-        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft overflow-hidden">
+        <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft overflow-hidden isolate" style={{ contain: 'paint' }}>
           <div ref={ref} style={{ height: '65vh', minHeight: 360 }} />
           <div className="flex flex-wrap items-center gap-4 px-5 py-3.5 border-t border-navy-50 dark:border-navy-700 text-xs text-navy-400">
             <span className="flex items-center gap-1.5"><span className="w-3 h-3 rounded-full bg-coral-500 inline-block border-2 border-white shadow-sm" /> Port (taille = fréquentation)</span>

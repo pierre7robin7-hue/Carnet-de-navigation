@@ -88,7 +88,7 @@ function RouteMap({ ports }) {
       </div>
     );
   }
-  return <div ref={ref} className="h-48 rounded-xl overflow-hidden border border-navy-100 dark:border-navy-700" />;
+  return <div ref={ref} className="h-48 rounded-xl overflow-hidden isolate border border-navy-100 dark:border-navy-700" style={{ contain: 'paint' }} />;
 }
 
 function EtapeCard({ leg, index }) {

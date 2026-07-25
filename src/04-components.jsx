@@ -98,7 +98,10 @@ function NavLink({ href, active, children, icon: IconCmp }) {
       href={href}
       className={classNames(
         'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
-        active ? 'bg-ocean-600 text-white' : 'text-navy-200 hover:text-white hover:bg-white/5'
+        // Un simple surlignage (pas de couleur pleine) : la couleur pleine
+        // ocean-600 reste réservée au bouton "Nouvelle sortie", seule action
+        // du bandeau — sinon les deux se confondent visuellement au même endroit.
+        active ? 'text-ocean-300 bg-white/10' : 'text-navy-200 hover:text-white hover:bg-white/5'
       )}
     >
       {IconCmp && <IconCmp size={16} />}
@@ -113,6 +116,14 @@ const NAV_LINKS = [
   { href: '#/carte', label: 'Carte', shortLabel: 'Carte', icon: Icon.Map, match: (r) => r.name === 'map' },
   { href: '#/export', label: 'Export', shortLabel: 'Export', icon: Icon.Download, match: (r) => r.name === 'export' },
 ];
+
+// "Ajouter une sortie" n'a de sens que là où on consulte une liste de
+// sorties : inutile sur la Carte ou l'Export, où le bouton n'aurait rien à
+// faire de plus près de son contenu (même logique que le bouton flottant
+// mobile, voir FabNewOuting).
+function isOutingListRoute(route) {
+  return route.name === 'dashboard' || route.name === 'history';
+}
 
 function Navbar({ route, userEmail, onSignOut, syncBadge }) {
   return (
@@ -142,7 +153,7 @@ function Navbar({ route, userEmail, onSignOut, syncBadge }) {
                 <Icon.X size={13} className="shrink-0" />
               </button>
             )}
-            <NewOutingButton display="hidden md:inline-flex" />
+            {isOutingListRoute(route) && <NewOutingButton display="hidden md:inline-flex" />}
           </div>
         </div>
       </div>
@@ -184,7 +195,7 @@ function FabNewOuting() {
     <a
       href="#/nouvelle"
       aria-label="Nouvelle sortie"
-      className="no-print md:hidden fixed z-30 right-4 flex items-center justify-center w-14 h-14 rounded-full bg-ocean-600 text-white shadow-fab active:scale-95 transition-transform"
+      className="no-print md:hidden fixed z-30 right-4 flex items-center justify-center w-14 h-14 rounded-full bg-ocean-600 text-white shadow-fab-lg ring-4 ring-sand-50 dark:ring-navy-950 active:scale-95 transition-transform"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 70px)' }}
     >
       <Icon.Plus size={26} />

@@ -334,7 +334,7 @@ function ExportPage({ outings, onImported }) {
         if (!Array.isArray(data.sorties)) throw new Error('invalid');
         setConfirmFile(data);
       } catch (err) {
-        setMessage({ tone: 'coral', text: 'Ce fichier ne semble pas être un export valide du Carnet de Navigation.' });
+        setMessage({ tone: 'coral', text: 'Ce fichier ne semble pas être un export valide du Carnet de Navigations.' });
       }
     };
     reader.readAsText(file);
@@ -418,7 +418,7 @@ function ExportPage({ outings, onImported }) {
             <div className="flex items-center gap-2.5">
               <Icon.Sailboat size={28} className="text-ocean-600" />
               <div>
-                <p className="font-heading font-bold text-xl text-navy-900 leading-tight">Carnet de Navigation</p>
+                <p className="font-heading font-bold text-xl text-navy-900 leading-tight">Carnet de Navigations</p>
                 <p className="text-xs text-navy-400 mt-0.5">{year === 'all' ? 'Toutes les navigations' : `Saison ${year}`}</p>
               </div>
             </div>

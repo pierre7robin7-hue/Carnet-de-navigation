@@ -33,6 +33,8 @@ function RouteMap({ ports }) {
     let map = null;
     let raf = null;
     let cancelled = false;
+    let themeObserver = null;
+    const tileState = { layer: null };
 
     // Leaflet est chargé à la demande (voir 09-page-map.jsx) : cette carte
     // peut être la première du parcours de l'utilisateur, donc `L` n'est pas
@@ -40,7 +42,8 @@ function RouteMap({ ports }) {
     loadLeaflet().then(() => {
       if (cancelled || !ref.current) return;
       map = L.map(ref.current, { zoomControl: false, attributionControl: false, dragging: true, scrollWheelZoom: false });
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+      tileState.layer = L.tileLayer(currentMapTileUrl(), { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+      themeObserver = watchMapTheme(map, tileState);
 
       const latlngs = resolved.map((p) => [p.pos.lat, p.pos.lon]);
       let line = null;
@@ -78,7 +81,7 @@ function RouteMap({ ports }) {
       });
     }).catch((err) => console.error('Chargement de la carte impossible', err));
 
-    return () => { cancelled = true; if (raf) cancelAnimationFrame(raf); if (map) map.remove(); };
+    return () => { cancelled = true; if (raf) cancelAnimationFrame(raf); if (themeObserver) themeObserver.disconnect(); if (map) map.remove(); };
   }, [resolved]);
 
   if (resolved.length === 0) {

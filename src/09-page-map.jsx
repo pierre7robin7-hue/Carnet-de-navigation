@@ -19,6 +19,32 @@ function loadLeaflet() {
   return leafletPromise;
 }
 
+// URL de fond de carte CARTO, clair ou sombre selon le thème courant de
+// l'app. Le thème change indépendamment de ces cartes (bouton lune dans la
+// barre du haut) : on ne le regarde donc pas qu'une fois au montage mais on
+// re-vérifie via un observateur (voir watchMapTheme) pour que la carte
+// suive un changement de thème fait pendant qu'elle est déjà affichée.
+function currentMapTileUrl() {
+  const dark = document.documentElement.classList.contains('dark');
+  return `https://{s}.basemaps.cartocdn.com/${dark ? 'dark_all' : 'light_all'}/{z}/{x}/{y}{r}.png`;
+}
+
+// Recrée la couche de tuiles quand la classe "dark" de <html> change, pour
+// qu'une bascule de thème pendant que la carte est affichée mette bien à
+// jour le fond de carte sans devoir recharger la page.
+function watchMapTheme(map, tileState) {
+  let dark = document.documentElement.classList.contains('dark');
+  const observer = new MutationObserver(() => {
+    const nowDark = document.documentElement.classList.contains('dark');
+    if (nowDark === dark) return;
+    dark = nowDark;
+    if (tileState.layer) map.removeLayer(tileState.layer);
+    tileState.layer = L.tileLayer(currentMapTileUrl(), { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+  });
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+  return observer;
+}
+
 function buildMapData(outings) {
   const portVisits = {}; // name -> count
   const unresolved = new Set();
@@ -115,6 +141,8 @@ function MapPage({ outings }) {
     let map = null;
     let raf = null;
     let cancelled = false;
+    let themeObserver = null;
+    const tileState = { layer: null };
 
     loadLeaflet().then(() => {
       if (cancelled || !ref.current) return;
@@ -123,9 +151,8 @@ function MapPage({ outings }) {
       L.control.attribution({ prefix: false, position: 'bottomright' })
         .addAttribution('© <a href="https://carto.com/attributions">CARTO</a> · © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>')
         .addTo(map);
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-        maxZoom: 19, subdomains: 'abcd',
-      }).addTo(map);
+      tileState.layer = L.tileLayer(currentMapTileUrl(), { maxZoom: 19, subdomains: 'abcd' }).addTo(map);
+      themeObserver = watchMapTheme(map, tileState);
 
       const bounds = [];
       const maxVisits = Math.max(1, ...Object.values(portVisits));
@@ -162,6 +189,7 @@ function MapPage({ outings }) {
     return () => {
       cancelled = true;
       if (raf) cancelAnimationFrame(raf);
+      if (themeObserver) themeObserver.disconnect();
       if (map) map.remove();
     };
   }, [portVisits]);

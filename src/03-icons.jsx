@@ -21,10 +21,6 @@ const Icon = {
     <path d="M5 12c0 4.5 3 7.5 7 8.5" />
     <path d="M19 12c0 4.5-3 7.5-7 8.5" />
   </>),
-  Compass: makeIcon(<>
-    <circle cx="12" cy="12" r="9" />
-    <path d="M15 9l-2 5-5 2 2-5z" />
-  </>),
   Sailboat: makeIcon(<>
     <path d="M4 19h16" />
     <path d="M6 19l1.5-6h9L18 19" />
@@ -35,11 +31,6 @@ const Icon = {
     <path d="M3 8h10a2.5 2.5 0 1 0-2.5-2.5" />
     <path d="M3 13h14a2.5 2.5 0 1 1-2.5 2.5" />
     <path d="M3 18h7a2 2 0 1 0-2-2" />
-  </>),
-  Waves: makeIcon(<>
-    <path d="M2 8c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0 3.5 2 5 0" />
-    <path d="M2 14c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0 3.5 2 5 0" />
-    <path d="M2 20c1.5-2 3.5-2 5 0s3.5 2 5 0 3.5-2 5 0 3.5 2 5 0" />
   </>),
   Map: makeIcon(<>
     <path d="M9 4L3 6v14l6-2 6 2 6-2V4l-6 2-6-2z" />
@@ -94,7 +85,6 @@ const Icon = {
     <circle cx="17.5" cy="9" r="2.3" />
     <path d="M15.5 14c2.9.3 5 2.7 5 6" />
   </>),
-  ChevronLeft: makeIcon(<polyline points="15 18 9 12 15 6" />),
   ChevronRight: makeIcon(<polyline points="9 18 15 12 9 6" />),
   X: makeIcon(<>
     <line x1="6" y1="6" x2="18" y2="18" />
@@ -155,17 +145,9 @@ const Icon = {
     <line x1="18" y1="6" x2="19.8" y2="4.2" />
   </>),
   Moon: makeIcon(<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" />),
-  Camera: makeIcon(<>
-    <path d="M4 8h3l1.5-2.5h7L17 8h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z" />
-    <circle cx="12" cy="14" r="3.5" />
-  </>),
   CloudOff: makeIcon(<>
     <path d="M3 3l18 18" />
     <path d="M9.5 6.2A5 5 0 0 1 19 8a4 4 0 0 1-.5 8H8" />
     <path d="M5.6 8.6A4 4 0 0 0 6 16.5" />
-  </>),
-  CloudCheck: makeIcon(<>
-    <path d="M6.5 17a4 4 0 0 1 .3-8 5 5 0 0 1 9.7-1.5A4 4 0 0 1 18.5 15" />
-    <path d="M9.5 15l1.8 1.8L15 13.2" />
   </>),
 };

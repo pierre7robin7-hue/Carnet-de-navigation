@@ -51,7 +51,7 @@ function LoginPage() {
       <div className="w-full max-w-sm bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-7">
         <div className="flex items-center gap-2 text-navy-900 dark:text-navy-50 font-heading font-semibold text-lg mb-1">
           <span className="text-ocean-500"><Icon.Sailboat size={24} /></span>
-          Carnet de Navigation
+          Carnet de Navigations
         </div>
         <p className="text-navy-400 text-sm mb-6">
           {mode === 'signin'

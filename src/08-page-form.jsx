@@ -35,8 +35,11 @@ function legFormToLeg(f) {
   };
 }
 
+// La distance est marquée "requise" dans le formulaire (voir LegFormFields) :
+// une chaîne vide doit donc être rejetée, pas silencieusement traitée comme
+// 0 — sans quoi le champ requis n'aurait aucun effet réel.
 function legIsValid(f) {
-  return !!(f.portDepart.trim() && f.portArrivee.trim() && f.date) && Number(f.distanceNm) >= 0;
+  return !!(f.portDepart.trim() && f.portArrivee.trim() && f.date) && f.distanceNm !== '' && Number(f.distanceNm) >= 0;
 }
 
 // Regroupe tous les champs d'une étape (trajet, météo, ressenti, voiles,
@@ -172,7 +175,7 @@ function LegFormFields({ leg, onChange }) {
             {leg.equipage.map((n) => (
               <span key={n} className="inline-flex items-center gap-1.5 bg-navy-50 dark:bg-navy-700 text-navy-700 dark:text-navy-200 text-sm font-medium pl-3 pr-1.5 py-1 rounded-full">
                 {n}
-                <button type="button" onClick={() => removeCrew(n)} className="text-navy-400 hover:text-coral-500"><Icon.X size={13} /></button>
+                <button type="button" onClick={() => removeCrew(n)} aria-label={`Retirer ${n} de l'équipage`} className="text-navy-400 hover:text-coral-500"><Icon.X size={13} /></button>
               </span>
             ))}
           </div>
@@ -226,28 +229,58 @@ function OutingFormPage({ existing, onSubmit }) {
     return [emptyLeg(), emptyLeg()];
   });
   const [error, setError] = React.useState('');
+  const errorRef = React.useRef(null);
+
+  // Repère toute modification faite depuis l'ouverture du formulaire, pour
+  // avertir avant de quitter sans enregistrer (fermeture d'onglet, ou clic
+  // sur "Annuler") plutôt que de perdre silencieusement la saisie.
+  const [dirty, setDirty] = React.useState(false);
+
+  React.useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
+
+  React.useEffect(() => {
+    if (!dirty) return;
+    const handler = (e) => { e.preventDefault(); e.returnValue = ''; };
+    window.addEventListener('beforeunload', handler);
+    return () => window.removeEventListener('beforeunload', handler);
+  }, [dirty]);
+
+  const confirmLeaveIfDirty = () => !dirty || window.confirm('Des modifications non enregistrées seront perdues. Quitter quand même ?');
+  const handleCancelClick = (e) => { if (!confirmLeaveIfDirty()) e.preventDefault(); };
 
   const changeMode = (next) => {
     if (next === mode) return;
+    if (next === 'simple' && mode === 'voyage') {
+      const wouldLoseData = etapes.slice(1).some((et) => et.portDepart.trim() || et.portArrivee.trim() || et.commentaire.trim());
+      if (wouldLoseData && !window.confirm('Repasser en "Sortie simple" ne conserve que la première étape — les autres seront perdues. Continuer ?')) {
+        return;
+      }
+    }
     if (next === 'voyage') setEtapes([leg, emptyLeg()]);
     else setLeg(etapes[0]);
     setMode(next);
     setError('');
+    setDirty(true);
   };
 
-  const updateEtape = (i, updated) => setEtapes((list) => list.map((e, idx) => (idx === i ? updated : e)));
-  const addEtape = () => setEtapes((list) => [...list, emptyLeg(list[list.length - 1] && list[list.length - 1].date)]);
-  const removeEtape = (i) => setEtapes((list) => (list.length > 2 ? list.filter((_, idx) => idx !== i) : list));
+  const withDirty = (setter) => (value) => { setter(value); setDirty(true); };
+  const setTitreDirty = withDirty(setTitre);
+  const setBateauModeleDirty = withDirty(setBateauModele);
+  const setLegDirty = withDirty(setLeg);
+
+  const updateEtape = (i, updated) => { setEtapes((list) => list.map((e, idx) => (idx === i ? updated : e))); setDirty(true); };
+  const addEtape = () => { setEtapes((list) => [...list, emptyLeg(list[list.length - 1] && list[list.length - 1].date)]); setDirty(true); };
+  const removeEtape = (i) => { setEtapes((list) => (list.length > 2 ? list.filter((_, idx) => idx !== i) : list)); setDirty(true); };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (mode === 'simple') {
-      if (!leg.portDepart.trim() || !leg.portArrivee.trim() || !leg.date) {
-        setError('Merci de renseigner au minimum le port de départ, le port d’arrivée et la date.');
-        return;
-      }
-      if (Number(leg.distanceNm) < 0) {
-        setError('La distance ne peut pas être négative.');
+      if (!legIsValid(leg)) {
+        setError('Merci de renseigner au minimum le port de départ, le port d’arrivée, la date et une distance valide (0 ou plus).');
         return;
       }
       setError('');
@@ -259,7 +292,7 @@ function OutingFormPage({ existing, onSubmit }) {
       }
       const invalidIndex = etapes.findIndex((et) => !legIsValid(et));
       if (invalidIndex !== -1) {
-        setError(`Étape ${invalidIndex + 1} : merci de renseigner le port de départ, le port d’arrivée, la date et une distance valide.`);
+        setError(`Étape ${invalidIndex + 1} : merci de renseigner le port de départ, le port d’arrivée, la date et une distance valide (0 ou plus).`);
         return;
       }
       setError('');
@@ -271,7 +304,7 @@ function OutingFormPage({ existing, onSubmit }) {
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <a href={cancelHref} className="inline-flex items-center gap-1.5 text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-100 text-sm font-medium mb-4">
+      <a href={cancelHref} onClick={handleCancelClick} className="inline-flex items-center gap-1.5 text-navy-500 dark:text-navy-400 hover:text-navy-800 dark:hover:text-navy-100 text-sm font-medium mb-4">
         <Icon.ArrowLeft size={16} /> Annuler
       </a>
       <h1 className="font-heading text-2xl sm:text-3xl font-bold text-navy-900 dark:text-navy-50 mb-6">
@@ -279,7 +312,7 @@ function OutingFormPage({ existing, onSubmit }) {
       </h1>
 
       {error && (
-        <div className="bg-coral-400/10 text-coral-600 text-sm rounded-lg px-4 py-3 mb-5 font-medium">{error}</div>
+        <div ref={errorRef} className="bg-coral-400/10 text-coral-600 text-sm rounded-lg px-4 py-3 mb-5 font-medium">{error}</div>
       )}
 
       <datalist id="ports-datalist">
@@ -292,17 +325,17 @@ function OutingFormPage({ existing, onSubmit }) {
         <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5 space-y-4">
           {mode === 'voyage' && (
             <Field label="Titre du voyage" hint="Optionnel — sinon généré à partir des ports de départ et d’arrivée">
-              <input className={inputClass} value={titre} onChange={(e) => setTitre(e.target.value)} placeholder="Ex. Croisière Belle-Île — 3 jours" />
+              <input className={inputClass} value={titre} onChange={(e) => setTitreDirty(e.target.value)} placeholder="Ex. Croisière Belle-Île — 3 jours" />
             </Field>
           )}
           <Field label="Modèle du bateau" hint="Optionnel">
-            <input className={inputClass} value={bateauModele} onChange={(e) => setBateauModele(e.target.value)} placeholder="Ex. Bénéteau Océanis 38" />
+            <input className={inputClass} value={bateauModele} onChange={(e) => setBateauModeleDirty(e.target.value)} placeholder="Ex. Bénéteau Océanis 38" />
           </Field>
         </section>
 
         {mode === 'simple' ? (
           <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
-            <LegFormFields leg={leg} onChange={setLeg} />
+            <LegFormFields leg={leg} onChange={setLegDirty} />
           </section>
         ) : (
           <>
@@ -333,7 +366,7 @@ function OutingFormPage({ existing, onSubmit }) {
         )}
 
         <div className="flex justify-end gap-3 pb-4">
-          <a href={cancelHref} className="px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-800">Annuler</a>
+          <a href={cancelHref} onClick={handleCancelClick} className="px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-800">Annuler</a>
           <button type="submit" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-ocean-600 hover:bg-ocean-500 text-white transition-colors">
             {isEdit ? 'Enregistrer les modifications' : 'Enregistrer la sortie'}
           </button>

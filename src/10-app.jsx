@@ -16,7 +16,7 @@ function Footer() {
     <footer className="no-print border-t border-navy-100 dark:border-navy-800 mt-10 pb-20 md:pb-0">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-center gap-2 text-navy-400 text-xs">
         <Icon.Anchor size={14} />
-        Carnet de Navigation — vos données sont liées à votre compte et synchronisées entre vos appareils.
+        Carnet de Navigations — vos données sont liées à votre compte et synchronisées entre vos appareils.
       </div>
     </footer>
   );

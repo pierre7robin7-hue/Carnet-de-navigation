@@ -67,7 +67,7 @@ function DashboardPage({ outings }) {
           title="Aucune navigation enregistrée"
           description="Commencez par ajouter votre première sortie pour voir apparaître vos statistiques et votre historique."
           action={
-            <a href="#/nouvelle" className="mt-2 inline-flex items-center gap-1.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white font-semibold text-sm shadow-glow hover:shadow-glow-lg transition-all px-4 py-2.5 rounded-lg">
+            <a href="#/nouvelle" className="mt-2 inline-flex items-center gap-1.5 bg-ocean-600 hover:bg-ocean-500 text-white font-semibold text-sm transition-colors px-4 py-2.5 rounded-lg">
               <Icon.Plus size={16} /> Ajouter une sortie
             </a>
           }
@@ -108,7 +108,7 @@ function DashboardPage({ outings }) {
                 </div>
                 <div className="h-2 rounded-full bg-navy-50 dark:bg-navy-700 overflow-hidden">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-ocean-400 to-ocean-600"
+                    className="h-full rounded-full bg-ocean-600"
                     style={{ width: `${Math.max(4, (b.distance / maxBoatDistance) * 100)}%` }}
                   />
                 </div>

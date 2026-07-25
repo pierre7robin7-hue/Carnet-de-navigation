@@ -76,7 +76,7 @@ function LoginPage() {
           {info && <p className="text-sm text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-900/30 rounded-lg px-3 py-2">{info}</p>}
           <button
             type="submit" disabled={loading}
-            className="w-full inline-flex items-center justify-center gap-1.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg shadow-glow hover:shadow-glow-lg transition-all disabled:opacity-60"
+            className="w-full inline-flex items-center justify-center gap-1.5 bg-ocean-600 hover:bg-ocean-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors disabled:opacity-60"
           >
             {loading ? 'Un instant…' : mode === 'signin' ? 'Se connecter' : 'Créer mon compte'}
           </button>

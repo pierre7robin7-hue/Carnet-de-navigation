@@ -1,3 +1,26 @@
+// Silhouette affichée le temps très bref de vérifier la session de
+// connexion, à la place d'un texte "Chargement…" : donne une impression de
+// démarrage instantané plutôt qu'un écran qui attend.
+function AppSkeleton() {
+  return (
+    <div className="min-h-screen flex flex-col">
+      <div className="h-16 bg-navy-950 safe-top" />
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8 w-full">
+        <div className="space-y-2">
+          <div className="h-8 w-52 rounded-lg bg-navy-100 dark:bg-navy-800 animate-pulse" />
+          <div className="h-4 w-64 rounded-lg bg-navy-100 dark:bg-navy-800 animate-pulse" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {[0, 1, 2].map((i) => (
+            <div key={i} className="h-24 rounded-2xl bg-white dark:bg-navy-800 shadow-soft animate-pulse" />
+          ))}
+        </div>
+        <div className="h-64 rounded-2xl bg-white dark:bg-navy-800 shadow-soft animate-pulse" />
+      </div>
+    </div>
+  );
+}
+
 function PageHeader({ title, subtitle, action }) {
   return (
     <div className="flex items-center justify-between flex-wrap gap-3">
@@ -60,7 +83,7 @@ function NewOutingButton({ display = 'inline-flex', className = '' }) {
       href="#/nouvelle"
       className={classNames(
         display,
-        'items-center gap-1.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white font-semibold text-sm px-3.5 py-2 rounded-lg shadow-glow hover:shadow-glow-lg transition-all',
+        'items-center gap-1.5 bg-ocean-600 hover:bg-ocean-500 text-white font-semibold text-sm px-3.5 py-2 rounded-lg transition-colors',
         className
       )}
     >
@@ -75,7 +98,7 @@ function NavLink({ href, active, children, icon: IconCmp }) {
       href={href}
       className={classNames(
         'flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all',
-        active ? 'bg-gradient-to-r from-ocean-500 to-ocean-600 text-white shadow-glow' : 'text-navy-200 hover:text-white hover:bg-white/5'
+        active ? 'bg-ocean-600 text-white' : 'text-navy-200 hover:text-white hover:bg-white/5'
       )}
     >
       {IconCmp && <IconCmp size={16} />}
@@ -93,7 +116,7 @@ const NAV_LINKS = [
 
 function Navbar({ route, userEmail, onSignOut, syncBadge }) {
   return (
-    <header className="no-print bg-gradient-to-r from-navy-950 via-navy-900 to-navy-900 sticky top-0 z-30 shadow-soft safe-top">
+    <header className="no-print bg-navy-950/90 backdrop-blur-xl sticky top-0 z-30 safe-top border-b border-white/5">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <div className="grid grid-cols-[1fr_auto] md:grid-cols-[1fr_auto_1fr] items-center h-16 gap-4">
           <a href="#/" className="flex items-center gap-2 text-white font-heading font-semibold text-lg tracking-tight justify-self-start">
@@ -123,7 +146,6 @@ function Navbar({ route, userEmail, onSignOut, syncBadge }) {
           </div>
         </div>
       </div>
-      <div className="h-2 bg-waves bg-navy-800" />
     </header>
   );
 }
@@ -162,7 +184,7 @@ function FabNewOuting() {
     <a
       href="#/nouvelle"
       aria-label="Nouvelle sortie"
-      className="no-print md:hidden fixed z-30 right-4 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-600 text-white shadow-glow-lg active:scale-95 transition-transform"
+      className="no-print md:hidden fixed z-30 right-4 flex items-center justify-center w-14 h-14 rounded-full bg-ocean-600 text-white shadow-fab active:scale-95 transition-transform"
       style={{ bottom: 'calc(env(safe-area-inset-bottom, 0px) + 70px)' }}
     >
       <Icon.Plus size={26} />
@@ -173,7 +195,7 @@ function FabNewOuting() {
 function StatCard({ icon: IconCmp, label, value, sub }) {
   return (
     <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft hover:shadow-lg transition-shadow p-5 flex items-start gap-4">
-      <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-ocean-500 to-ocean-700 text-white flex items-center justify-center shrink-0 shadow-glow">
+      <div className="w-11 h-11 rounded-xl bg-ocean-50 dark:bg-ocean-900/40 text-ocean-600 dark:text-ocean-300 flex items-center justify-center shrink-0">
         <IconCmp size={22} />
       </div>
       <div className="min-w-0">
@@ -207,12 +229,6 @@ function MonthlyChart({ data }) {
   const barWidth = (width - padLeft * 2 - barGap * (data.length - 1)) / data.length;
   return (
     <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-56" preserveAspectRatio="xMidYMid meet">
-      <defs>
-        <linearGradient id="barGradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4da2ff" />
-          <stop offset="100%" stopColor="#0e4fa8" />
-        </linearGradient>
-      </defs>
       <line x1={padLeft} y1={height - padBottom} x2={width - padLeft} y2={height - padBottom} className="stroke-sand-300 dark:stroke-navy-700" strokeWidth="1" />
       {data.map((d, i) => {
         const barH = d.value <= 0 ? 0 : Math.max(3, ((height - padTop - padBottom) * d.value) / max);
@@ -220,7 +236,7 @@ function MonthlyChart({ data }) {
         const y = height - padBottom - barH;
         return (
           <g key={d.key}>
-            <rect x={x} y={y} width={barWidth} height={barH} rx={5} fill="url(#barGradient)">
+            <rect x={x} y={y} width={barWidth} height={barH} rx={5} fill="#0f63d1">
               <title>{`${d.label} : ${d.value.toFixed(1)} MN`}</title>
             </rect>
             <text
@@ -322,7 +338,7 @@ function VoyageCard({ outing }) {
 function EmptyState({ icon: IconCmp = Icon.Sailboat, title, description, action }) {
   return (
     <div className="bg-white/60 dark:bg-navy-800/60 border border-dashed border-navy-200 dark:border-navy-700 rounded-2xl p-10 text-center flex flex-col items-center gap-3">
-      <div className="w-14 h-14 rounded-full bg-gradient-to-br from-ocean-400 to-ocean-600 text-white flex items-center justify-center shadow-glow">
+      <div className="w-14 h-14 rounded-full bg-ocean-600 text-white flex items-center justify-center">
         <IconCmp size={26} />
       </div>
       <h3 className="font-heading font-semibold text-navy-800 dark:text-navy-100 text-lg">{title}</h3>

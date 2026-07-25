@@ -30,6 +30,19 @@ function uid() {
   return 'id-' + Date.now() + '-' + Math.random().toString(16).slice(2);
 }
 
+// Date du jour au format AAAA-MM-JJ, dans le fuseau local de l'utilisateur.
+// `new Date().toISOString()` renvoie la date en UTC : en soirée en France,
+// ça peut encore afficher la veille (par ex. 23h locales = 22h UTC la veille
+// une partie de l'année) — gênant précisément au moment où l'on saisit sa
+// sortie du jour en rentrant.
+function todayLocalISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 function parseDateLocal(iso) {
   if (!iso) return null;
   const [y, m, d] = iso.split('-').map(Number);

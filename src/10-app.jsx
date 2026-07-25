@@ -153,11 +153,7 @@ function App() {
   };
 
   if (session === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-navy-400 dark:text-navy-500">
-        Chargement du carnet de navigation…
-      </div>
-    );
+    return <AppSkeleton />;
   }
 
   if (!session) {
@@ -183,7 +179,10 @@ function App() {
     page = <OutingDetailPage outing={outing} onDelete={handleDelete} />;
   }
 
-  const showFab = route.name !== 'new' && route.name !== 'edit';
+  // Masqué sur la carte et la fiche détail : les deux affichent une carte
+  // Leaflet tactile (glisser/zoom) dans ce même coin bas-droit, que le bouton
+  // flottant viendrait autrement recouvrir et gêner.
+  const showFab = route.name !== 'new' && route.name !== 'edit' && route.name !== 'map' && route.name !== 'detail';
 
   return (
     <div className="min-h-screen flex flex-col">

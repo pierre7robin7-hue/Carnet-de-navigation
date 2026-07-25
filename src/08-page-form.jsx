@@ -1,6 +1,6 @@
 function emptyLeg(dateDefault) {
   return {
-    portDepart: '', portArrivee: '', date: dateDefault || new Date().toISOString().slice(0, 10),
+    portDepart: '', portArrivee: '', date: dateDefault || todayLocalISO(),
     distanceNm: '', dureeH: '', dureeM: '',
     meteo: { ventNoeuds: '', directionVent: 'NO', etatMer: 'peu_agitee' },
     skipper: { humeur: 'bon', fatigue: 2, notes: '' },
@@ -310,7 +310,7 @@ function OutingFormPage({ existing, onSubmit }) {
               <section key={i} className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-700 text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
+                    <span className="w-7 h-7 rounded-full bg-ocean-600 text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
                     <span className="font-heading font-semibold text-navy-800 dark:text-navy-100">Étape {i + 1}</span>
                   </div>
                   {etapes.length > 2 && (
@@ -334,7 +334,7 @@ function OutingFormPage({ existing, onSubmit }) {
 
         <div className="flex justify-end gap-3 pb-4">
           <a href={cancelHref} className="px-4 py-2.5 rounded-lg text-sm font-medium text-navy-600 dark:text-navy-300 hover:bg-navy-50 dark:hover:bg-navy-800">Annuler</a>
-          <button type="submit" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white shadow-glow hover:shadow-glow-lg transition-all">
+          <button type="submit" className="px-5 py-2.5 rounded-lg text-sm font-semibold bg-ocean-600 hover:bg-ocean-500 text-white transition-colors">
             {isEdit ? 'Enregistrer les modifications' : 'Enregistrer la sortie'}
           </button>
         </div>

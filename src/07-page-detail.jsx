@@ -101,7 +101,7 @@ function EtapeCard({ leg, index }) {
     <div className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
       <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="w-7 h-7 rounded-full bg-gradient-to-br from-ocean-500 to-ocean-700 text-white text-xs font-bold flex items-center justify-center shrink-0">{index + 1}</span>
+          <span className="w-7 h-7 rounded-full bg-ocean-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{index + 1}</span>
           <span className="font-heading font-semibold text-navy-900 dark:text-navy-50 truncate">{leg.portDepart} <Icon.ChevronRight size={13} className="inline text-ocean-500" /> {leg.portArrivee}</span>
         </div>
         <span className="text-xs text-navy-400 flex items-center gap-1.5 shrink-0"><Icon.Calendar size={13} /> {formatDateFR(leg.date)}</span>

@@ -159,7 +159,7 @@ function ExportPage({ outings, onImported }) {
 
   const handleExport = () => {
     const data = Store.exportData();
-    const stamp = new Date().toISOString().slice(0, 10);
+    const stamp = todayLocalISO();
     downloadJSON(data, `carnet-navigation-${stamp}.json`);
   };
 
@@ -223,7 +223,7 @@ function ExportPage({ outings, onImported }) {
           garder une copie de secours en local, ou migrer des données entre deux comptes.
         </p>
         <div className="flex flex-wrap gap-3">
-          <button onClick={handleExport} className="inline-flex items-center gap-1.5 bg-gradient-to-r from-ocean-500 to-ocean-600 hover:from-ocean-400 hover:to-ocean-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg shadow-glow hover:shadow-glow-lg transition-all">
+          <button onClick={handleExport} className="inline-flex items-center gap-1.5 bg-ocean-600 hover:bg-ocean-500 text-white font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors">
             <Icon.Download size={16} /> Exporter mes données (.json)
           </button>
           <button onClick={pickFile} className="inline-flex items-center gap-1.5 bg-navy-50 dark:bg-navy-700 hover:bg-navy-100 dark:hover:bg-navy-600 text-navy-700 dark:text-navy-200 font-semibold text-sm px-4 py-2.5 rounded-lg transition-colors">

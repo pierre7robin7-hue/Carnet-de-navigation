@@ -111,14 +111,19 @@
      interne, qui ignore une partie de nos styles : la valeur peut sembler
      mal alignée par rapport aux menus déroulants voisins, et surtout, en
      dessous de 16px la page zoome automatiquement au moment où on touche le
-     champ (comportement natif de Safari, gênant dans une app installée). */
-  input[type="date"] {
+     champ (comportement natif de Safari, gênant dans une app installée).
+     Une hauteur fixe (pas juste min-height) sur les deux types de champ est
+     nécessaire : sur iOS, un input date vide sans hauteur figée peut se
+     rendre plus grand qu'un <select> voisin, ce qui casse l'alignement de
+     la grille de filtres. */
+  input[type="date"], select {
     font-size: 16px;
-    min-height: 2.5rem;
+    height: 2.75rem;
   }
   input[type="date"]::-webkit-date-and-time-value {
     text-align: left;
     margin: 0;
+    min-height: 1.2em;
   }
 
   .leaflet-container { font-family: 'Inter', sans-serif; background: #f7f9fb; }
@@ -194,7 +199,7 @@
   // jour du code source, sans quoi les visiteurs garderaient l'ancienne
   // version en cache.
   (async function boot() {
-    const APP_VERSION = '2026-07-27-1';
+    const APP_VERSION = '2026-07-27-2';
     const CACHE_KEY = 'carnet-nav-compiled-' + APP_VERSION;
     const rootEl = document.getElementById('root');
     try {

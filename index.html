@@ -107,23 +107,17 @@
      pas se superposer visuellement avec les icônes du système. */
   .safe-top { padding-top: env(safe-area-inset-top, 0px); }
 
-  /* iOS Safari affiche les <input type="date"> avec son propre rendu
-     interne, qui ignore une partie de nos styles : la valeur peut sembler
-     mal alignée par rapport aux menus déroulants voisins, et surtout, en
-     dessous de 16px la page zoome automatiquement au moment où on touche le
-     champ (comportement natif de Safari, gênant dans une app installée).
-     Une hauteur fixe (pas juste min-height) sur les deux types de champ est
-     nécessaire : sur iOS, un input date vide sans hauteur figée peut se
-     rendre plus grand qu'un <select> voisin, ce qui casse l'alignement de
-     la grille de filtres. */
-  input[type="date"], select {
-    font-size: 16px;
-    height: 2.75rem;
-  }
+  /* En dessous de 16px, Safari iOS zoome automatiquement la page au moment
+     où on touche un champ (comportement natif, gênant dans une app
+     installée). La hauteur de l'input date lui-même n'est PAS fixée ici :
+     iOS ignore `height`/`min-height` sur ce contrôle natif et lui garde sa
+     propre taille interne — c'est pour ça qu'on le fait vivre à l'intérieur
+     d'un conteneur à hauteur figée à la place (voir DateField, 04-components.jsx). */
+  input[type="date"] { font-size: 16px; }
+  select { height: 2.75rem; }
   input[type="date"]::-webkit-date-and-time-value {
     text-align: left;
     margin: 0;
-    min-height: 1.2em;
   }
 
   .leaflet-container { font-family: 'Inter', sans-serif; background: #f7f9fb; }
@@ -199,7 +193,7 @@
   // jour du code source, sans quoi les visiteurs garderaient l'ancienne
   // version en cache.
   (async function boot() {
-    const APP_VERSION = '2026-07-27-2';
+    const APP_VERSION = '2026-07-27-3';
     const CACHE_KEY = 'carnet-nav-compiled-' + APP_VERSION;
     const rootEl = document.getElementById('root');
     try {

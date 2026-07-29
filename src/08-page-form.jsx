@@ -81,7 +81,7 @@ function LegFormFields({ leg, onChange }) {
             <input list="ports-datalist" className={inputClass} value={leg.portArrivee} onChange={(e) => set('portArrivee', e.target.value)} placeholder="Ex. Île de Groix" />
           </Field>
           <Field label="Date" required>
-            <input type="date" className={inputClass} value={leg.date} onChange={(e) => set('date', e.target.value)} />
+            <DateField value={leg.date} onChange={(e) => set('date', e.target.value)} />
           </Field>
           <Field label="Distance parcourue (MN)" required>
             <input type="number" min="0" step="0.1" className={inputClass} value={leg.distanceNm} onChange={(e) => set('distanceNm', e.target.value)} placeholder="0" />

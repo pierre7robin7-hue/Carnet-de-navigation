@@ -392,3 +392,21 @@ function Field({ label, children, required, hint }) {
 }
 
 const inputClass = 'w-full rounded-lg border border-navy-100 dark:border-navy-700 bg-white dark:bg-navy-900 px-3 py-2 text-sm text-navy-900 dark:text-navy-50 placeholder-navy-300 dark:placeholder-navy-500 focus:outline-none focus:ring-2 focus:ring-ocean-400 focus:border-ocean-400 transition-shadow';
+
+// iOS Safari ignore souvent `height`/`padding` sur un <input type="date"> : le
+// contrôle natif garde sa propre taille interne, plus grande que celle des
+// menus déroulants voisins (déjà tenté via CSS globale — sans effet sur cet
+// appareil). Seule solution fiable : figer la hauteur sur un conteneur, puis
+// positionner l'input en `absolute inset-0` à l'intérieur — un input
+// positionné de cette façon est contraint à occuper exactement la boîte du
+// conteneur, y compris sur iOS, plutôt que d'imposer sa propre taille.
+function DateField({ value, onChange, className = '' }) {
+  return (
+    <div className={classNames('relative h-11 w-full rounded-lg border border-navy-100 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden focus-within:ring-2 focus-within:ring-ocean-400 focus-within:border-ocean-400 transition-shadow', className)}>
+      <input
+        type="date" value={value} onChange={onChange}
+        className="absolute inset-0 w-full h-full bg-transparent border-0 px-3 text-sm text-navy-900 dark:text-navy-50 focus:outline-none"
+      />
+    </div>
+  );
+}

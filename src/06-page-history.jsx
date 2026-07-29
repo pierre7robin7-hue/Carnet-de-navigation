@@ -40,10 +40,10 @@ function HistoryPage({ outings }) {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <Field label="Du">
-            <input type="date" value={filters.dateFrom} onChange={setFilter('dateFrom')} className={inputClass} />
+            <DateField value={filters.dateFrom} onChange={setFilter('dateFrom')} />
           </Field>
           <Field label="Au">
-            <input type="date" value={filters.dateTo} onChange={setFilter('dateTo')} className={inputClass} />
+            <DateField value={filters.dateTo} onChange={setFilter('dateTo')} />
           </Field>
           <Field label="Port">
             <select value={filters.port} onChange={setFilter('port')} className={inputClass}>

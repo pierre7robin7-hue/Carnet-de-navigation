@@ -73,6 +73,15 @@ function formatNm(nm) {
   return `${n % 1 === 0 ? n : n.toFixed(1)} MN`;
 }
 
+// Une étape (ou une sortie simple) ne fait pas forcément escale chaque soir :
+// une traversée directe peut s'étaler sur plusieurs jours sans "vraie" étape
+// intermédiaire. `fin` est facultative — quand elle est absente ou égale au
+// départ, on retombe sur une simple date unique (comportement historique).
+function dateRangeLabel(debut, fin, opts) {
+  if (!fin || fin === debut) return formatDateFR(debut, opts);
+  return `${formatDateFR(debut, opts)} → ${formatDateFR(fin, opts)}`;
+}
+
 function etatMerLabel(value) {
   const e = ETATS_MER.find((x) => x.value === value);
   return e ? e.label : value || '—';
@@ -103,7 +112,7 @@ function isVoyage(o) {
 function outingLegs(o) {
   if (isVoyage(o)) return o.etapes || [];
   return [{
-    portDepart: o.portDepart, portArrivee: o.portArrivee, date: o.date,
+    portDepart: o.portDepart, portArrivee: o.portArrivee, date: o.date, dateFin: o.dateFin,
     distanceNm: o.distanceNm, dureeMin: o.dureeMin, meteo: o.meteo,
     skipper: o.skipper, voiles: o.voiles, equipage: o.equipage, commentaire: o.commentaire,
   }];
@@ -124,14 +133,21 @@ function outingDateDebut(o) {
   return legs.reduce((min, l) => (l.date && (!min || l.date < min) ? l.date : min), '');
 }
 
+// Prend en compte la date de fin de chaque étape (une traversée directe peut
+// s'étaler sur plusieurs jours sans escale intermédiaire), pas seulement sa
+// date de départ — sinon une sortie longue mais sans étape ressortirait
+// encore à sa date de départ, alors qu'elle s'est terminée bien plus tard.
 function outingDateFin(o) {
   const legs = outingLegs(o);
-  return legs.reduce((max, l) => (l.date && (!max || l.date > max) ? l.date : max), '');
+  return legs.reduce((max, l) => {
+    const fin = l.dateFin || l.date;
+    return fin && (!max || fin > max) ? fin : max;
+  }, '');
 }
 
 // Date utilisée pour le tri chronologique et les regroupements par mois.
 function outingSortDate(o) {
-  return isVoyage(o) ? outingDateFin(o) : o.date;
+  return outingDateFin(o);
 }
 
 function outingDistanceTotal(o) {
@@ -156,6 +172,27 @@ function outingEquipageAll(o) {
   const set = new Set();
   outingLegs(o).forEach((l) => (l.equipage || []).forEach((n) => set.add(n)));
   return Array.from(set);
+}
+
+// Équipiers déjà saisis par le passé, toutes sorties confondues : proposés
+// dans le formulaire pour ne plus avoir à les retaper à chaque fois.
+function usedCrewNames(outings) {
+  const set = new Set();
+  outings.forEach((o) => outingEquipageAll(o).forEach((n) => set.add(n)));
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
+}
+
+// Ports déjà utilisés par l'utilisateur (départ ou arrivée d'une sortie
+// passée), plutôt que la base géographique complète (~70 ports français) :
+// l'autocomplétion du formulaire ne doit suggérer que des ports pertinents
+// pour cet utilisateur, pas une liste générique.
+function usedPortNames(outings) {
+  const set = new Set();
+  outings.forEach((o) => outingLegs(o).forEach((l) => {
+    if (l.portDepart) set.add(l.portDepart);
+    if (l.portArrivee) set.add(l.portArrivee);
+  }));
+  return Array.from(set).sort((a, b) => a.localeCompare(b));
 }
 
 function outingVoilesAll(o) {

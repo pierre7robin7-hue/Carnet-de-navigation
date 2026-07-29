@@ -88,11 +88,3 @@ function findPort(name) {
   const custom = CustomPorts.getAll().find((p) => p.name.toLowerCase() === clean && p.lat != null && p.lon != null);
   return custom || null;
 }
-
-// Tous les noms de ports connus (base intégrée + personnalisés, même non
-// encore localisés) : utilisé pour l'autocomplétion du formulaire.
-function allKnownPortNames() {
-  const set = new Set(PORTS.map((p) => p.name));
-  CustomPorts.getAll().forEach((p) => set.add(p.name));
-  return Array.from(set).sort((a, b) => a.localeCompare(b));
-}

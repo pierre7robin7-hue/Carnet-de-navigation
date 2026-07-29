@@ -1,6 +1,6 @@
 function emptyLeg(dateDefault) {
   return {
-    portDepart: '', portArrivee: '', date: dateDefault || todayLocalISO(),
+    portDepart: '', portArrivee: '', date: dateDefault || todayLocalISO(), dateFin: '',
     distanceNm: '', dureeH: '', dureeM: '',
     meteo: { ventNoeuds: '', directionVent: 'NO', etatMer: 'peu_agitee' },
     skipper: { humeur: 'bon', fatigue: 2, notes: '' },
@@ -13,6 +13,10 @@ function legToForm(leg) {
   const m = (leg.dureeMin || 0) % 60;
   return {
     portDepart: leg.portDepart || '', portArrivee: leg.portArrivee || '', date: leg.date || '',
+    // Vide plutôt que répétée : une date de fin identique à la date de
+    // départ (cas normal, sortie d'une journée) ne doit pas se réafficher
+    // comme si elle avait été saisie exprès.
+    dateFin: leg.dateFin && leg.dateFin !== leg.date ? leg.dateFin : '',
     distanceNm: leg.distanceNm != null ? String(leg.distanceNm) : '',
     dureeH: String(h), dureeM: String(m),
     meteo: { ventNoeuds: leg.meteo && leg.meteo.ventNoeuds != null ? String(leg.meteo.ventNoeuds) : '', directionVent: (leg.meteo && leg.meteo.directionVent) || 'NO', etatMer: (leg.meteo && leg.meteo.etatMer) || 'peu_agitee' },
@@ -24,6 +28,11 @@ function legToForm(leg) {
 function legFormToLeg(f) {
   return {
     portDepart: f.portDepart.trim(), portArrivee: f.portArrivee.trim(), date: f.date,
+    // Une date de fin non renseignée (ou antérieure/égale au départ, ce qui
+    // n'aurait pas de sens) retombe sur le départ : le reste de l'app peut
+    // alors toujours lire `dateFin` sans distinguer les sorties d'une seule
+    // journée de celles qui s'étalent sur plusieurs.
+    dateFin: f.dateFin && f.dateFin > f.date ? f.dateFin : f.date,
     distanceNm: Number(f.distanceNm) || 0,
     dureeMin: (Number(f.dureeH) || 0) * 60 + (Number(f.dureeM) || 0),
     meteo: {
@@ -39,13 +48,15 @@ function legFormToLeg(f) {
 // une chaîne vide doit donc être rejetée, pas silencieusement traitée comme
 // 0 — sans quoi le champ requis n'aurait aucun effet réel.
 function legIsValid(f) {
-  return !!(f.portDepart.trim() && f.portArrivee.trim() && f.date) && f.distanceNm !== '' && Number(f.distanceNm) >= 0;
+  return !!(f.portDepart.trim() && f.portArrivee.trim() && f.date)
+    && f.distanceNm !== '' && Number(f.distanceNm) >= 0
+    && (!f.dateFin || f.dateFin >= f.date);
 }
 
 // Regroupe tous les champs d'une étape (trajet, météo, ressenti, voiles,
 // équipage, commentaire). Réutilisé tel quel pour une sortie simple (une
 // seule étape) ou répété pour chaque étape d'un voyage multi-étapes.
-function LegFormFields({ leg, onChange }) {
+function LegFormFields({ leg, onChange, knownCrew }) {
   const [crewInput, setCrewInput] = React.useState('');
 
   const set = (path, value) => {
@@ -61,13 +72,14 @@ function LegFormFields({ leg, onChange }) {
     onChange({ ...leg, voiles: leg.voiles.includes(voile) ? leg.voiles.filter((v) => v !== voile) : [...leg.voiles, voile] });
   };
 
-  const addCrew = () => {
-    const name = crewInput.trim();
-    if (!name) return;
-    if (!leg.equipage.includes(name)) onChange({ ...leg, equipage: [...leg.equipage, name] });
-    setCrewInput('');
+  const addCrew = (name) => {
+    const clean = (name != null ? name : crewInput).trim();
+    if (!clean) return;
+    if (!leg.equipage.includes(clean)) onChange({ ...leg, equipage: [...leg.equipage, clean] });
+    if (name == null) setCrewInput('');
   };
   const removeCrew = (name) => onChange({ ...leg, equipage: leg.equipage.filter((n) => n !== name) });
+  const suggestedCrew = (knownCrew || []).filter((n) => !leg.equipage.includes(n));
 
   return (
     <div className="space-y-4">
@@ -80,8 +92,11 @@ function LegFormFields({ leg, onChange }) {
           <Field label="Port d’arrivée" required>
             <input list="ports-datalist" className={inputClass} value={leg.portArrivee} onChange={(e) => set('portArrivee', e.target.value)} placeholder="Ex. Île de Groix" />
           </Field>
-          <Field label="Date" required>
-            <DateField value={leg.date} onChange={(e) => set('date', e.target.value)} />
+          <Field label="Date de départ" required>
+            <DateField value={leg.date} max={leg.dateFin || undefined} onChange={(e) => set('date', e.target.value)} />
+          </Field>
+          <Field label="Date d’arrivée" hint="Si la traversée s’est étalée sur plusieurs jours sans escale">
+            <DateField value={leg.dateFin} min={leg.date || undefined} onChange={(e) => set('dateFin', e.target.value)} />
           </Field>
           <Field label="Distance parcourue (MN)" required>
             <input type="number" min="0" step="0.1" className={inputClass} value={leg.distanceNm} onChange={(e) => set('distanceNm', e.target.value)} placeholder="0" />
@@ -168,8 +183,20 @@ function LegFormFields({ leg, onChange }) {
             placeholder="Nom de l’équipier·ère"
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addCrew(); } }}
           />
-          <button type="button" onClick={addCrew} className="shrink-0 px-4 rounded-lg bg-navy-800 dark:bg-navy-600 text-white text-sm font-medium hover:bg-navy-700 dark:hover:bg-navy-500">Ajouter</button>
+          <button type="button" onClick={() => addCrew()} className="shrink-0 px-4 rounded-lg bg-navy-800 dark:bg-navy-600 text-white text-sm font-medium hover:bg-navy-700 dark:hover:bg-navy-500">Ajouter</button>
         </div>
+        {suggestedCrew.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-3">
+            {suggestedCrew.map((n) => (
+              <button
+                type="button" key={n} onClick={() => addCrew(n)}
+                className="inline-flex items-center gap-1 text-sm font-medium text-navy-500 dark:text-navy-400 border border-dashed border-navy-200 dark:border-navy-700 pl-2.5 pr-3 py-1 rounded-full hover:border-ocean-400 hover:text-ocean-600 hover:bg-ocean-50/50 dark:hover:bg-ocean-900/20 transition-colors"
+              >
+                <Icon.Plus size={13} /> {n}
+              </button>
+            ))}
+          </div>
+        )}
         {leg.equipage.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-3">
             {leg.equipage.map((n) => (
@@ -192,7 +219,7 @@ function LegFormFields({ leg, onChange }) {
 
 function ModeToggle({ mode, setMode }) {
   const options = [
-    { value: 'simple', label: 'Sortie simple', icon: Icon.Sailboat, hint: 'Un aller entre deux ports, en une journée' },
+    { value: 'simple', label: 'Sortie simple', icon: Icon.Sailboat, hint: 'Un aller entre deux ports, direct (même sur plusieurs jours)' },
     { value: 'voyage', label: 'Voyage multi-étapes', icon: Icon.Route, hint: 'Plusieurs jours, avec escales' },
   ];
   return (
@@ -218,7 +245,7 @@ function ModeToggle({ mode, setMode }) {
   );
 }
 
-function OutingFormPage({ existing, onSubmit }) {
+function OutingFormPage({ existing, onSubmit, outings }) {
   const isEdit = !!existing;
   const [mode, setMode] = React.useState(isEdit && isVoyage(existing) ? 'voyage' : 'simple');
   const [titre, setTitre] = React.useState((isEdit && existing.titre) || '');
@@ -230,6 +257,11 @@ function OutingFormPage({ existing, onSubmit }) {
   });
   const [error, setError] = React.useState('');
   const errorRef = React.useRef(null);
+
+  // Ports et équipiers déjà saisis par le passé : proposés dans le formulaire
+  // pour que la saisie n'exige plus de tout retaper à chaque sortie.
+  const knownPorts = React.useMemo(() => usedPortNames(outings || []), [outings]);
+  const knownCrew = React.useMemo(() => usedCrewNames(outings || []), [outings]);
 
   // Repère toute modification faite depuis l'ouverture du formulaire, pour
   // avertir avant de quitter sans enregistrer (fermeture d'onglet, ou clic
@@ -316,7 +348,7 @@ function OutingFormPage({ existing, onSubmit }) {
       )}
 
       <datalist id="ports-datalist">
-        {allKnownPortNames().map((name) => <option key={name} value={name} />)}
+        {knownPorts.map((name) => <option key={name} value={name} />)}
       </datalist>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -335,7 +367,7 @@ function OutingFormPage({ existing, onSubmit }) {
 
         {mode === 'simple' ? (
           <section className="bg-white dark:bg-navy-800 rounded-2xl shadow-soft p-5">
-            <LegFormFields leg={leg} onChange={setLegDirty} />
+            <LegFormFields leg={leg} onChange={setLegDirty} knownCrew={knownCrew} />
           </section>
         ) : (
           <>
@@ -352,7 +384,7 @@ function OutingFormPage({ existing, onSubmit }) {
                     </button>
                   )}
                 </div>
-                <LegFormFields leg={et} onChange={(updated) => updateEtape(i, updated)} />
+                <LegFormFields leg={et} onChange={(updated) => updateEtape(i, updated)} knownCrew={knownCrew} />
               </section>
             ))}
 

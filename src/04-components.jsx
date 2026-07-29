@@ -284,7 +284,7 @@ function OutingCard({ outing }) {
             <span className="truncate">{outing.portArrivee}</span>
           </div>
           <p className="text-navy-400 text-xs mt-1 flex items-center gap-1.5">
-            <Icon.Calendar size={13} /> {formatDateFR(outing.date)}
+            <Icon.Calendar size={13} /> {dateRangeLabel(outing.date, outing.dateFin)}
           </p>
         </div>
         <MoodEmoji value={outing.skipper && outing.skipper.humeur} />
@@ -400,11 +400,11 @@ const inputClass = 'w-full rounded-lg border border-navy-100 dark:border-navy-70
 // positionner l'input en `absolute inset-0` à l'intérieur — un input
 // positionné de cette façon est contraint à occuper exactement la boîte du
 // conteneur, y compris sur iOS, plutôt que d'imposer sa propre taille.
-function DateField({ value, onChange, className = '' }) {
+function DateField({ value, onChange, min, max, className = '' }) {
   return (
     <div className={classNames('relative h-11 w-full rounded-lg border border-navy-100 dark:border-navy-700 bg-white dark:bg-navy-900 overflow-hidden focus-within:ring-2 focus-within:ring-ocean-400 focus-within:border-ocean-400 transition-shadow', className)}>
       <input
-        type="date" value={value} onChange={onChange}
+        type="date" value={value} onChange={onChange} min={min} max={max}
         className="absolute inset-0 w-full h-full bg-transparent border-0 px-3 text-sm text-navy-900 dark:text-navy-50 focus:outline-none"
       />
     </div>

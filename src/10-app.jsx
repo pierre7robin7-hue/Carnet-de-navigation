@@ -170,10 +170,10 @@ function App() {
   } else if (route.name === 'export') {
     page = <ExportPage outings={outings} onImported={refresh} />;
   } else if (route.name === 'new') {
-    page = <OutingFormPage onSubmit={handleCreate} />;
+    page = <OutingFormPage outings={outings} onSubmit={handleCreate} />;
   } else if (route.name === 'edit') {
     const existing = outings.find((o) => o.id === route.id);
-    page = <OutingFormPage existing={existing} onSubmit={(data) => handleUpdate(route.id, data)} />;
+    page = <OutingFormPage existing={existing} outings={outings} onSubmit={(data) => handleUpdate(route.id, data)} />;
   } else if (route.name === 'detail') {
     const outing = outings.find((o) => o.id === route.id) || null;
     page = <OutingDetailPage outing={outing} onDelete={handleDelete} />;

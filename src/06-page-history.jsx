@@ -1,20 +1,17 @@
 function HistoryPage({ outings }) {
   const [filters, setFilters] = React.useState({ dateFrom: '', dateTo: '', port: '', etatMer: '', directionVent: '' });
 
-  const allPorts = React.useMemo(() => {
-    const set = new Set();
-    outings.forEach((o) => outingLegs(o).forEach((l) => {
-      if (l.portDepart) set.add(l.portDepart);
-      if (l.portArrivee) set.add(l.portArrivee);
-    }));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [outings]);
+  const allPorts = React.useMemo(() => usedPortNames(outings), [outings]);
 
   // Une sortie « matche » si au moins une de ses étapes correspond aux
   // filtres (une seule étape suffit à faire remonter tout le voyage).
   const filtered = React.useMemo(() => {
     return outings.filter((o) => outingLegs(o).some((l) => {
-      if (filters.dateFrom && l.date < filters.dateFrom) return false;
+      // Chevauchement d'intervalle plutôt que simple comparaison sur la date
+      // de départ : une traversée commencée avant "Du" mais terminée dans la
+      // période filtrée doit rester visible (sans ça, une sortie de
+      // plusieurs jours pouvait disparaître des résultats).
+      if (filters.dateFrom && (l.dateFin || l.date) < filters.dateFrom) return false;
       if (filters.dateTo && l.date > filters.dateTo) return false;
       if (filters.port && l.portDepart !== filters.port && l.portArrivee !== filters.port) return false;
       if (filters.etatMer && (!l.meteo || l.meteo.etatMer !== filters.etatMer)) return false;
@@ -40,10 +37,10 @@ function HistoryPage({ outings }) {
         </div>
         <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <Field label="Du">
-            <DateField value={filters.dateFrom} onChange={setFilter('dateFrom')} />
+            <DateField value={filters.dateFrom} max={filters.dateTo || undefined} onChange={setFilter('dateFrom')} />
           </Field>
           <Field label="Au">
-            <DateField value={filters.dateTo} onChange={setFilter('dateTo')} />
+            <DateField value={filters.dateTo} min={filters.dateFrom || undefined} onChange={setFilter('dateTo')} />
           </Field>
           <Field label="Port">
             <select value={filters.port} onChange={setFilter('port')} className={inputClass}>

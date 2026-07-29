@@ -107,7 +107,7 @@ function EtapeCard({ leg, index }) {
           <span className="w-7 h-7 rounded-full bg-ocean-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{index + 1}</span>
           <span className="font-heading font-semibold text-navy-900 dark:text-navy-50 truncate">{leg.portDepart} <Icon.ChevronRight size={13} className="inline text-ocean-500" /> {leg.portArrivee}</span>
         </div>
-        <span className="text-xs text-navy-400 flex items-center gap-1.5 shrink-0"><Icon.Calendar size={13} /> {formatDateFR(leg.date)}</span>
+        <span className="text-xs text-navy-400 flex items-center gap-1.5 shrink-0"><Icon.Calendar size={13} /> {dateRangeLabel(leg.date, leg.dateFin)}</span>
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -244,7 +244,7 @@ function SimpleDetailPage({ outing, onDelete, confirmOpen, setConfirmOpen }) {
         <DetailHeader
           outing={outing}
           title={<span className="flex items-center gap-2">{outing.portDepart}<Icon.ChevronRight size={20} className="text-ocean-500" />{outing.portArrivee}</span>}
-          dateLabel={formatDateFR(outing.date, { long: true })}
+          dateLabel={dateRangeLabel(outing.date, outing.dateFin, { long: true })}
           onDelete={onDelete} confirmOpen={confirmOpen} setConfirmOpen={setConfirmOpen}
         />
 

@@ -1,6 +1,7 @@
 function computeStats(outings) {
   const totalSorties = outings.length;
   const totalNm = outings.reduce((sum, o) => sum + outingDistanceTotal(o), 0);
+  const totalDuree = outings.reduce((sum, o) => sum + outingDureeTotal(o), 0);
 
   const portCounts = {};
   outings.forEach((o) => {
@@ -18,7 +19,7 @@ function computeStats(outings) {
     }
   });
 
-  return { totalSorties, totalNm, topPort, topCount };
+  return { totalSorties, totalNm, totalDuree, topPort, topCount };
 }
 
 function computeBoatStats(outings) {
@@ -80,9 +81,10 @@ function DashboardPage({ outings }) {
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-8">
       <PageHeader title="Tableau de bord" subtitle="Vue d’ensemble de vos navigations" />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard icon={Icon.Notebook} label="Sorties enregistrées" value={stats.totalSorties} />
         <StatCard icon={Icon.Route} label="Milles parcourus" value={formatNm(stats.totalNm)} />
+        <StatCard icon={Icon.Clock} label="Temps en mer" value={formatDuree(stats.totalDuree)} />
         <StatCard icon={Icon.MapPin} label="Port le plus fréquenté" value={stats.topPort || '—'} sub={stats.topCount ? `${stats.topCount} passages` : ''} />
       </div>
 
